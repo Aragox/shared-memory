@@ -1,0 +1,20 @@
+COMPILAR EL CÓDIGO
+
+La siguiente línea compilará el código C.
+
+make
+
+Donde "app" es el nombre del archivo output ejecutable.
+
+CORRER EL CÓDIGO
+En la terminal en el directorio /shared-memory, correr:
+
+./app
+
+Donde "app" es el nombre del archivo output ejecutable.
+
+LIMPIAR EL PROYECTO
+Para borrar los archivos objeto y ejecutables, correr:
+
+make clean
+
