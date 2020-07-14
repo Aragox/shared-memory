@@ -6,7 +6,7 @@ CC=gcc
 # debug
 DEBUG=-g
 # optimisation
-OPT=-O0
+OPT=-D_XOPEN_SOURCE=700
 # warnings
 WARN=-Wall
 
@@ -14,11 +14,11 @@ PTHREAD=-pthread
 
 CCFLAGS=$(DEBUG) $(OPT) $(WARN) $(PTHREAD) -pipe
 
-GTKLIB=`pkg-config --cflags --libs gtk+-3.0`
+LIB=-lrt
 
 # linker
 LD=gcc
-LDFLAGS=$(PTHREAD) $(GTKLIB) -export-dynamic
+LDFLAGS=$(PTHREAD) $(LIB) -export-dynamic
 
 OBJS=    main.o
 
@@ -26,7 +26,7 @@ all:	$(OBJS)
 	$(LD) -o $(TARGET) $(OBJS) $(LDFLAGS)
     
 main.o:	src/main.c
-	$(CC) -c $(CCFLAGS) src/main.c $(GTKLIB) -o main.o
+	$(CC) -c $(CCFLAGS) src/main.c $(LIB) -o main.o
     
 clean:
 	rm -f *.o $(TARGET)

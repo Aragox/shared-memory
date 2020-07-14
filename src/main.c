@@ -1,14 +1,14 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stdint.h>
-#include <fcntl.h>
-#include <sys/shm.h>
-#include <sys/stat.h>
-#include <sys/mman.h>
-#include <unistd.h>
+#include "producer.h"
 
-#define BUFFER_SIZE (100) // Tamaño del array buffer
+#define OBJECT_SIZE (sizeof(char[100][20]) + sizeof(sem_t) + 3*sizeof(int)) // Tamaño del objeto en memoria compartida
+
+const char *sem_name = "SEM_GARFIELD"; // Nombre del semáforo (variable constante)
+
+void create_variables_in_sharedmemory(char *buffer_name) {
+    //bool end_signal;
+//    int active_producers = 0; //Productores activos
+//    int active_consumers = 0; //Consumidores activos
+}
 
 int main()
 {
@@ -31,7 +31,7 @@ int main()
     }     
 
     // Configurar el tamaño del objeto en memoria compartida
-    ftruncate(shm_fd, size);
+    ftruncate(shm_fd, BUFFER_SIZE);
 
     // Mapear memoria del objeto compartido en memoria
     buffer_ptr = mmap(0, BUFFER_SIZE, PROT_WRITE | PROT_READ, MAP_SHARED, shm_fd, 0);
@@ -64,9 +64,7 @@ int main()
 
 */
    // bool wait;
-    //bool signal;
-//    int active_producers = 0; //Productores activos
-//    int active_consumers = 0; //Consumidores activos
+
     int numer_Choice = 0;
     char buffer_name[30]; // Nombre del buffer en memoria compartida (dirección) 
     int waiting_time;
@@ -87,7 +85,7 @@ int main()
             scanf( "%s" , buffer_name );
             puts("Tiempo de espera");
             scanf("%d", &waiting_time);
-/*            int res = new_producer(buffer_name, waiting_time);
+/*            int res = new_producer(buffer_name, OBJECT_SIZE, waiting_time);
             if (res) { // Se creó el proceso exitósamente
                can_use_finisher = 1;
                puts("Productor creado exitósamente");
@@ -102,7 +100,7 @@ int main()
             scanf( "%s" , buffer_name );
             puts("Tiempo de espera");
             scanf("%d", &waiting_time);
-/*            int res = new_consumer(buffer_name, waiting_time);
+/*            int res = new_consumer(buffer_name, OBJECT_SIZE, waiting_time);
             if (res) { // Se creó el proceso exitósamente
                can_use_finisher = 1;
                puts("Consumidor creado exitósamente");
@@ -116,7 +114,7 @@ int main()
                puts("Crear Finalizador");
                puts("Nombre del Buffer");
                scanf( "%s" , buffer_name );
-/*               int res = new_finisher(buffer_name);
+/*               int res = new_finisher(buffer_name, OBJECT_SIZE);
                if (res) { // Se creó el proceso exitósamente
                   can_use_finisher = 0;
                   puts("Finalizador creado exitósamente");
