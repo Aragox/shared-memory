@@ -35,4 +35,12 @@ int new_producer(char *name, int size, int waiting_time)
     //strcpy(ptr[100], message); // Depositar mensaje en el buffer
 
     return 1;
+}
+
+int main()
+{
+    printf(">>\n");
+    printf("getpid(): %d", getpid()); // Obtener e imprimir el id del proceso
+    printf(">>\n");
+    return 0;
 } 

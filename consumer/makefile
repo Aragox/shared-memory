@@ -1,5 +1,5 @@
 # change application name here (executable output name)
-TARGET=app
+TARGET=consumer
 
 # compiler
 CC=gcc
