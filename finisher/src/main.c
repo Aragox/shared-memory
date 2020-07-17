@@ -51,7 +51,7 @@ int main(int argc, char* argv[])
         }
   
         if (argc!=2) {
-           printf("\nWrong number of arguments. Closing program..."); 
+           printf("\nWrong number of arguments (only 2 required). Closing program..."); 
            return 0;
         }
         if (!valid_arg2) {

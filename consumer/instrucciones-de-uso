@@ -9,9 +9,11 @@ Donde "consumer" es el nombre del archivo output ejecutable.
 CORRER EL CÓDIGO
 En la terminal en el directorio /shared-memory/consumer, correr:
 
-./consumer
+./consumer arg2 arg3
 
-Donde "consumer" es el nombre del archivo output ejecutable.
+- Donde "consumer" es el nombre del archivo output ejecutable.
+- Donde arg2 es un string (nombre del buffer).
+- Donde arg3 es un número (media de tiempo de espera en segundos).
 
 LIMPIAR EL PROYECTO
 Para borrar los archivos objeto y ejecutables, correr:

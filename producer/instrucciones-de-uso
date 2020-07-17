@@ -9,9 +9,11 @@ Donde "producer" es el nombre del archivo output ejecutable.
 CORRER EL CÓDIGO
 En la terminal en el directorio /shared-memory/producer, correr:
 
-./producer
+./producer arg2 arg3
 
-Donde "producer" es el nombre del archivo output ejecutable.
+- Donde "producer" es el nombre del archivo output ejecutable.
+- Donde arg2 es un string (nombre del buffer).
+- Donde arg3 es un número (media de tiempo de espera en segundos).
 
 LIMPIAR EL PROYECTO
 Para borrar los archivos objeto y ejecutables, correr:

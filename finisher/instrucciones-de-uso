@@ -9,9 +9,10 @@ Donde "finisher" es el nombre del archivo output ejecutable.
 CORRER EL CÓDIGO
 En la terminal en el directorio /shared-memory/finisher, correr:
 
-./finisher
+./finisher arg2
 
-Donde "finisher" es el nombre del archivo output ejecutable.
+- Donde "finisher" es el nombre del archivo output ejecutable.
+- Donde arg2 es un string (nombre del buffer).
 
 LIMPIAR EL PROYECTO
 Para borrar los archivos objeto y ejecutables, correr:

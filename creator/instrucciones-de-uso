@@ -9,9 +9,11 @@ Donde "creator" es el nombre del archivo output ejecutable.
 CORRER EL CÓDIGO
 En la terminal en el directorio /shared-memory/creator, correr:
 
-./creator
+./creator arg2 arg3
 
-Donde "creator" es el nombre del archivo output ejecutable.
+- Donde "creator" es el nombre del archivo output ejecutable.
+- Donde arg2 es un string (nombre del buffer).
+- Donde arg3 es un número (tamaño del buffer).
 
 LIMPIAR EL PROYECTO
 Para borrar los archivos objeto y ejecutables, correr:
