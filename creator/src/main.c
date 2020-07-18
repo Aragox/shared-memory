@@ -9,14 +9,48 @@
 #include <unistd.h>
 #include <semaphore.h>
 
-//#define OBJECT_SIZE (sizeof(char[100][20]) + sizeof(sem_t) + 3*sizeof(int)) // Tamaño del objeto en memoria compartida
+#include "circular_buffer.h"
+
 
 const char *sem_name = "SEM_GARFIELD"; // Nombre del semáforo (variable constante)
 
-void create_variables_in_sharedmemory(char *buffer_name) {
-    //bool end_signal;
-//    int active_producers = 0; //Productores activos
-//    int active_consumers = 0; //Consumidores activos
+void initialize_sharedmemory_variables(char *buffer_name, int size) {
+      int end_signal = 0;
+      int active_producers = 0; //Productores activos
+      int active_consumers = 0; //Consumidores activos
+
+      circular_buffer *cb = (circular_buffer*)malloc(sizeof(circular_buffer)); // PRUEBAS AL BUFFER CIRCULAR
+      int val = cb_init(cb, 3, 12); 
+      if (val == 0) {
+         printf("\nBuffer inicializado correctamente");
+      } else {
+         printf("\nError al inicializar buffer");
+      }
+
+
+      char a[] = "Hello world";
+      char b[] = "Yeah";
+      char c[] = "Cyanide and happiness";
+      char d[] = "One more!";
+      char *ptr = NULL;
+
+      cb_push_back(cb, a);
+      cb_push_back(cb, b);
+      cb_push_back(cb, c);
+      cb_push_back(cb, d); // Intento agregar otro item más aunque el buffer ya está lleno (la idea es que se maneje el error)
+
+      ptr = cb_pop_front(cb);
+      printf("\nValor: %s", ptr);
+      ptr = cb_pop_front(cb);
+      printf("\nValor: %s", ptr);
+      ptr = cb_pop_front(cb);
+      printf("\nValor: %s", ptr);      
+      ptr = cb_pop_front(cb);
+      printf("\nValor: %s", ptr); // Intento sacar otro item más aunque el buffer ya está vacío (la idea es que se maneje el error)
+
+      printf("\ncount: %zu", cb->count);
+
+      cb_free(cb);
 }
 
 /*    // Nombre del buffer en memoria compartida (dirección) 
@@ -131,8 +165,10 @@ int main(int argc, char* argv[])
         }
 
       printf("\n<<");
-      printf("getpid(): %d", getpid()); // Obtener e imprimir el id del proceso
-      printf(">>\n");        
+      printf("Process ID: %d", getpid()); // Obtener e imprimir el id del proceso
+      printf(">>\n");  
+
+      initialize_sharedmemory_variables("/Pepe", 120);      
     } 
 
     return 0;

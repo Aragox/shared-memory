@@ -28,11 +28,12 @@ int main(int argc, char* argv[])
         }
 
         int valid_arg2 = 1; // Indica si el argumento 2 es válido
+        int valid_arg3 = 1; // Indica si el argumento 3 es válido
         size_t large;
         int cont = 1;
         int count2;
         char* pstring;
-        while(cont < 2) { // Chequea que el segundo argumento sea string
+        while(cont < 3) { // Chequea que el segundo argumento sea string, y que el tercero sea un número
             large = strlen(argv[cont]);
             printf("\nLength %zu : %s",large,argv[cont]);
             count2 = 0;
@@ -44,18 +45,27 @@ int main(int argc, char* argv[])
                       valid_arg2 = 0;
                       break;
                    }
-                } 
+                } else {
+                   if (large > 1 || (pstring[count2] != '0' && pstring[count2] != '1')) { // Verificar que los caracteres del tercer argumento sean números de 1 dígito (0 o 1) 
+                      valid_arg3 = 0;
+                      break;
+                   }
+                }
                 count2 = count2 + 1; 
             }       
             cont = cont + 1;
         }
   
-        if (argc!=2) {
-           printf("\nWrong number of arguments (only 2 required). Closing program..."); 
+        if (argc!=3) {
+           printf("\nWrong number of arguments (only 3 required). Closing program..."); 
            return 0;
         }
         if (!valid_arg2) {
            printf("\nargv[2] is invalid (only letters are allowed). Closing program..."); 
+           return 0;
+        }
+        if (!valid_arg3) {
+           printf("\nargv[3] is invalid (only one digit is allowed, 0 or 1). Closing program..."); 
            return 0;
         }
 
