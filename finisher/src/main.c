@@ -61,11 +61,11 @@ int main(int argc, char* argv[])
            return 0;
         }
         if (!valid_arg2) {
-           printf("\nargv[2] is invalid (only letters are allowed). Closing program..."); 
+           printf("\nargv[1] is invalid (only letters are allowed). Closing program..."); 
            return 0;
         }
         if (!valid_arg3) {
-           printf("\nargv[3] is invalid (only one digit is allowed, 0 or 1). Closing program..."); 
+           printf("\nargv[2] is invalid (only one digit is allowed, 0 or 1). Closing program..."); 
            return 0;
         }
 
