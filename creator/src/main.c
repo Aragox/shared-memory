@@ -10,8 +10,6 @@
 
 #include "circular_buffer.h"
 
-#define BUFFER_SIZE (sizeof(circular_buffer))
-
 
 void initialize_sharedmemory_variables(char *buffer_name, int capacity)
 // Función que crea e inicializa el buffer en memoria compartida. Todas las variables y banderas del enunciado son también parte del buffer
@@ -33,6 +31,7 @@ void initialize_sharedmemory_variables(char *buffer_name, int capacity)
 
     // Mapear memoria del objeto compartido en memoria
     circular_buffer *cb = (circular_buffer*)mmap(0, BUFFER_SIZE, PROT_WRITE | PROT_READ, MAP_SHARED, shm_fd, 0);  //Obtengo puntero al buffer en memoria compartida 
+
     if (cb == MAP_FAILED)
     {
         close(shm_fd);
@@ -47,7 +46,7 @@ void initialize_sharedmemory_variables(char *buffer_name, int capacity)
       } else {
          printf("\nError al inicializar buffer\n");
       }
-//--------------------------------------------------------------------------------------------------------------------------
+/*//--------------------------------------------------------------------------------------------------------------------------
 //##########################################################################################################################
 // PRUEBAS AL BUFFER CIRCULAR EN MEMORIA COMPARTIDA. ESTO ES CÓDIGO INNECESARIO EN EL PROGRAMA CREADOR
 //##########################################################################################################################
@@ -74,12 +73,13 @@ void initialize_sharedmemory_variables(char *buffer_name, int capacity)
 
       printf("\ncount: %zu", cb->count);
 
-      cb_free(cb);  
+//      cb_free(cb);  
 //--------------------------------------------------------------------------------------------------------------------------
 //##########################################################################################################################
 // FIN DE LAS PRUEBAS
 //##########################################################################################################################
 //--------------------------------------------------------------------------------------------------------------------------  
+*/
     // Liberar la memoria mapeada (liberar el buffer)
     if (munmap(cb, BUFFER_SIZE) == -1)
     {
@@ -87,9 +87,9 @@ void initialize_sharedmemory_variables(char *buffer_name, int capacity)
         perror("\nError un-mmapping the file\n");
         exit(EXIT_FAILURE);
     }
-
-    /* Destruír memoria compartida */
-    shm_unlink(buffer_name);
+/*
+    // Destruír memoria compartida 
+    shm_unlink(buffer_name);*/
 
     // Cerrar File.
     close(shm_fd);

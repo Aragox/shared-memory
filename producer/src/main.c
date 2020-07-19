@@ -7,41 +7,107 @@
 #include <sys/stat.h>
 #include <fcntl.h> 
 #include <unistd.h>
-#include <semaphore.h>
-  
-int new_producer(char *name, int size, int waiting_time) 
+
+#include "circular_buffer.h"
+
+
+void execute_finisher(char *buffer_name, int capacity)
+// Función que ejecuta el finisher para finalizar los productores, enviar mensajes de finalización a consumidores y liberar el buffer
+{
+    //File descriptor de la memoria compartida
+    int shm_fd;
+
+    // Crear el objeto de memoria compartida 
+    shm_fd = shm_open(buffer_name, O_RDWR, 0666);
+
+    if (shm_fd == -1)
+    {
+        perror("\nError opening file for writing\n");
+        exit(EXIT_FAILURE);
+    }     
+
+    // Configurar el tamaño del objeto en memoria compartida
+    ftruncate(shm_fd, BUFFER_SIZE);
+
+    // Mapear memoria del objeto compartido en memoria
+    circular_buffer *cb = (circular_buffer*)mmap(0, BUFFER_SIZE, PROT_WRITE | PROT_READ, MAP_SHARED, shm_fd, 0);  //Obtengo puntero al buffer en memoria compartida 
+    if (cb == MAP_FAILED)
+    {
+        close(shm_fd);
+        perror("\nError mmapping the file\n");
+        exit(EXIT_FAILURE);
+    }
+
+    char f = get_value(cb);
+    printf("\nValor: %c", f);
+/*
+//--------------------------------------------------------------------------------------------------------------------------
+//##########################################################################################################################
+// PRUEBAS AL BUFFER CIRCULAR EN MEMORIA COMPARTIDA. ESTO ES CÓDIGO INNECESARIO EN EL PROGRAMA CREADOR
+//##########################################################################################################################
+//--------------------------------------------------------------------------------------------------------------------------
+      char a[] = "Hello world";
+      char b[] = "Yeah";
+      char c[] = "Cyanide and happiness";
+      char d[] = "One more!";
+      char *ptr = NULL;
+
+      cb_push_back(cb, a);
+      cb_push_back(cb, b);
+      cb_push_back(cb, c);
+      cb_push_back(cb, d); // Intento agregar otro item más aunque el buffer ya está lleno (la idea es que se maneje el error)
+
+      ptr = cb_pop_front(cb);
+      printf("\nValor: %s", ptr);
+      ptr = cb_pop_front(cb);
+      printf("\nValor: %s", ptr);
+      ptr = cb_pop_front(cb);
+      printf("\nValor: %s", ptr);      
+      ptr = cb_pop_front(cb);
+      printf("\nValor: %s", ptr); // Intento sacar otro item más aunque el buffer ya está vacío (la idea es que se maneje el error)
+
+      printf("\ncount: %zu", cb->count);
+
+      cb_free(cb);  
+//--------------------------------------------------------------------------------------------------------------------------
+//##########################################################################################################################
+// FIN DE LAS PRUEBAS
+//##########################################################################################################################
+//--------------------------------------------------------------------------------------------------------------------------  
+*/
+    // Liberar la memoria mapeada (liberar el buffer)
+    if (munmap(cb, BUFFER_SIZE) == -1)
+    {
+        close(shm_fd);
+        perror("\nError un-mmapping the file\n");
+        exit(EXIT_FAILURE);
+    }
+
+    /* Destruír memoria compartida */
+    shm_unlink(buffer_name);
+
+    // Cerrar File.
+    close(shm_fd);
+}   
+ 
+int myatoi(char* str) 
+/* Función atoi() implementada en C. Hace casting de una hilera de chars a un sólo número y lo retorna. Obtenida de
+https://www.geeksforgeeks.org/write-your-own-atoi/*/
 { 
+    // Initialize result 
+    int res = 0; 
   
-    // mensaje a producir/escribir en memoria compartida 
-    //char* message = generate_message(); 
-  
-    // file descriptor de memoria compartida 
-    int shm_fd; 
-  
-    // puntero a objeto en memoria compartida 
-    void* ptr; 
-  
-    // crear el objeto de memoria compartida 
-    shm_fd = shm_open(name, O_CREAT | O_RDWR, 0666); 
-  
-    // configurar el tamaño del objeto en memoria compartida 
-    ftruncate(shm_fd, size); 
-  
-    // mapear memoria de objeto en memoria compartida 
-    ptr = mmap(0, size, PROT_WRITE, MAP_SHARED, shm_fd, 0); 
-
-    //Escribir al objeto en memoria compartida
-    ptr += sizeof(char[100][20]) + sizeof(sem_t); // Aumenta la cantidad de productores activos
-
-    //strcpy(ptr[100], message); // Depositar mensaje en el buffer
-
-    return 1;
-}
+    // Iterate through all characters 
+    // of input string and update result 
+    for (int i = 0; str[i] != '\0'; ++i) { 
+        res = res * 10 + str[i] - '0'; 
+    }
+    // return result. 
+    return res; 
+} 
 
 int main(int argc, char* argv[])
 {
-    char buffer_name[30]; // Nombre del buffer en memoria compartida (dirección) 
-
     printf("Program Name Is: %s",argv[0]); 
     if(argc==1) { 
        printf("\nNo Extra Command Line Argument Passed Other Than Program Name. Closing program..."); 
@@ -98,8 +164,10 @@ int main(int argc, char* argv[])
         }
 
       printf("\n<<");
-      printf("getpid(): %d", getpid()); // Obtener e imprimir el id del proceso
-      printf(">>\n");        
+      printf("Process ID: %d", getpid()); // Obtener e imprimir el id del proceso
+      printf(">>\n");
+  
+      execute_finisher(argv[1], myatoi(argv[2]));      
     } 
 
     return 0;
