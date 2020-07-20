@@ -8,90 +8,114 @@
 #include <string.h>
 #include <semaphore.h>
 
+#define BUFFER_CAPACITY (3) // máximo número de items en el buffer
+#define DATE_AND_TIME_LENGTH (128) // largo del string de la fecha y hora
+
+typedef struct message  // Struct del buffer junto con todas las variables, banderas y semáforos
+{
+    int pid; //Id del proceso productor o finalizador
+    int end_message; //Indica si el mensaje fue producido por el finalizador
+    char date_and_time[DATE_AND_TIME_LENGTH]; //Un string que contiene el tiempo y fecha actuales 
+    int key; //Llave aleatoria entre 0-4     
+} message;
+
 /*Parte de la implementación del circular_buffer obtenida de 
 https://stackoverflow.com/questions/827691/how-do-you-implement-a-circular-buffer-in-c*/
 
-typedef struct circular_buffer
+typedef struct circular_buffer // Struct del buffer circular junto con todas las variables, banderas y semáforos
 {
-/*    char *buffer;     // datos del buffer
-    char *buffer_end; // puntero al final de los datos del buffer
-    size_t capacity;  // máximo número de items en el buffer
+    message buffer[BUFFER_CAPACITY]; // datos del buffer     
     size_t count;     // número de items en el buffer
-    size_t sz;        // tamaño de cada item en el buffer
-    char *head;       // puntero a head
-    char *tail;       // puntero a tail
+    int front;       // posición
+    int rear;       // posición
 
     int end_signal; // Bandera de finalización para los productores (0 ó 1)
     int active_producers; //Productores activos
     int active_consumers; //Consumidores activos
 
     sem_t sem1; // Semáforo
-*/
-    char buffer[30];
+
 } circular_buffer;
 
 
 #define BUFFER_SIZE (sizeof(circular_buffer)) // Definir el tamaño del struct
 
 
-int cb_init(circular_buffer *cb, size_t capacity, size_t sz)
+void cb_init(circular_buffer *cb)
 //Función que inicializa el buffer
 {
-/*    cb->buffer = malloc(capacity * sz); // Inicializar buffer
-    if(cb->buffer == NULL) {
-        printf("\nFailed to allocate buffer memory dynamically");
-        return 1;
-    }
-    cb->buffer_end = (char *)cb->buffer + capacity * sz;
-    cb->capacity = capacity;
+    for (int i = 0; i < BUFFER_CAPACITY; i++) { // Inicializar buffer
+        memset(cb->buffer[i].date_and_time, '\0', sizeof(DATE_AND_TIME_LENGTH));
+    } 
+
     cb->count = 0;
-    cb->sz = sz;
-    cb->head = cb->buffer;
-    cb->tail = cb->buffer;
+    cb->front = -1;
+    cb->rear = -1;
 
     cb->end_signal = 0; // Inicializar variables y banderas
     cb->active_producers = 0; 
     cb->active_consumers = 0; 
 
     sem_init(&cb->sem1, 1, 1); // Inicializar semáforo
-*/
-    memset(cb->buffer, '5', sizeof(cb->buffer));
-    return 0;
+
+//    memcpy (cb->buffer[0].date_and_time, "hola, eres vos", sizeof("hola, eres vos")); 
 }
 
-void cb_free(circular_buffer *cb)
-//Función que libera el buffer
-{
-    free(cb->buffer);
-}
-/*
-void cb_push_back(circular_buffer *cb, const void *item)
+void cb_enqueue(circular_buffer *cb, message *item)
 //Función que agrega un item en head
 {
-    if(cb->count == cb->capacity){
+    if((cb->front == 0 && cb->rear == BUFFER_CAPACITY-1) || (cb->rear == (cb->front-1)%(BUFFER_CAPACITY-1))){
         printf("\nBuffer is full!");
         return;
-    }
-    memcpy(cb->head, item, cb->sz + 1);
-    cb->head = (char*)cb->head + cb->sz;
-    if(cb->head == cb->buffer_end)
-        cb->head = cb->buffer;
+    }  
+    else if (cb->front == -1) //Insertar primer elemento
+    { 
+        cb->front = cb->rear = 0; 
+    } 
+  
+    else if (cb->rear == BUFFER_CAPACITY-1 && cb->front != 0) 
+    { 
+        cb->rear = 0; 
+    } 
+  
+    else
+    { 
+        cb->rear = (cb->rear + 1)%(BUFFER_CAPACITY); 
+    } 
+    cb->buffer[cb->rear].pid = (*item).pid; // Copiar variables del mensaje
+    cb->buffer[cb->rear].end_message = (*item).end_message;
+    cb->buffer[cb->rear].key = (*item).key;
+    memcpy (cb->buffer[cb->rear].date_and_time, (*item).date_and_time, sizeof((*item).date_and_time)); // Copiar string de fecha y hora
+
     cb->count++;
 }
 
-char* cb_pop_front(circular_buffer *cb)
+message* cb_dequeue(circular_buffer *cb)
 //Función que elimina un item en tail
 {
-    if(cb->count == 0){
+    if (cb->front == -1) 
+    { 
         printf("\nBuffer is empty!");
-        return NULL;
+        return NULL; 
+    } 
+    message* temp = &cb->buffer[cb->front]; 
+//    memset(cb->buffer[cb->front].date_and_time, '\0', sizeof(DATE_AND_TIME_LENGTH)); 
+    if (cb->front == cb->rear) 
+    { 
+        cb->front = -1; 
+        cb->rear = -1; 
+    } 
+    else if (cb->front == BUFFER_CAPACITY-1) 
+    { 
+        cb->front = 0; 
     }
-    char* temp = cb->tail;
-    cb->tail = (char*)cb->tail + cb->sz;
-    if(cb->tail == cb->buffer_end)
-        cb->tail = cb->buffer;
+    else
+    {
+        cb->front = (cb->front + 1)%(BUFFER_CAPACITY); 
+    }
     cb->count--;
-    return temp;
+  
+    return temp; 
 }
 
 void increase_activeproducers(circular_buffer *cb) {
@@ -134,11 +158,9 @@ size_t get_count(circular_buffer *cb) {
     return cb->count;
 }
 
-size_t get_capacity(circular_buffer *cb) {
-    return cb->capacity;
-}
-*/
 
-char get_value(circular_buffer *cb) {
-    return *cb->buffer;
-}
+/*
+char* get_value(circular_buffer *cb) {
+    char* temp = cb->buffer[0].date_and_time;
+    return temp;
+}*/

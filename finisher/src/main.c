@@ -38,43 +38,38 @@ void execute_finisher(char *buffer_name, int capacity)
         exit(EXIT_FAILURE);
     }
 
-    char f = get_value(cb);
-    printf("\nValor: %c", f);
-/*
 //--------------------------------------------------------------------------------------------------------------------------
 //##########################################################################################################################
 // PRUEBAS AL BUFFER CIRCULAR EN MEMORIA COMPARTIDA. ESTO ES CÓDIGO INNECESARIO EN EL PROGRAMA CREADOR
 //##########################################################################################################################
 //--------------------------------------------------------------------------------------------------------------------------
-      char a[] = "Hello world";
-      char b[] = "Yeah";
-      char c[] = "Cyanide and happiness";
-      char d[] = "One more!";
-      char *ptr = NULL;
+      message* ptr = NULL;
 
-      cb_push_back(cb, a);
-      cb_push_back(cb, b);
-      cb_push_back(cb, c);
-      cb_push_back(cb, d); // Intento agregar otro item más aunque el buffer ya está lleno (la idea es que se maneje el error)
+      ptr = cb_dequeue(cb);
+      if (ptr != NULL) {
+      printf("\nPop: %s", (*ptr).date_and_time);
+      }
+      ptr = cb_dequeue(cb);
+      if (ptr != NULL) {
+      printf("\nPop: %s", (*ptr).date_and_time);
+      }
+      ptr = cb_dequeue(cb);
+      if (ptr != NULL) {
+      printf("\nPop: %s", (*ptr).date_and_time); 
+      } 
+      ptr = cb_dequeue(cb);
+      if (ptr != NULL) {
+      printf("\nPop: %s", (*ptr).date_and_time); // Intento sacar otro item más aunque el buffer ya está vacío (la idea es que se maneje el error)*/
+      }       
 
-      ptr = cb_pop_front(cb);
-      printf("\nValor: %s", ptr);
-      ptr = cb_pop_front(cb);
-      printf("\nValor: %s", ptr);
-      ptr = cb_pop_front(cb);
-      printf("\nValor: %s", ptr);      
-      ptr = cb_pop_front(cb);
-      printf("\nValor: %s", ptr); // Intento sacar otro item más aunque el buffer ya está vacío (la idea es que se maneje el error)
-
-      printf("\ncount: %zu", cb->count);
-
-      cb_free(cb);  
+      printf("\n#Mensajes en el buffer: %zu\n", cb->count);
+ 
 //--------------------------------------------------------------------------------------------------------------------------
 //##########################################################################################################################
 // FIN DE LAS PRUEBAS
 //##########################################################################################################################
-//--------------------------------------------------------------------------------------------------------------------------  
-*/
+//-------------------------------------------------------------------------------------------------------------------------- 
+
     // Liberar la memoria mapeada (liberar el buffer)
     if (munmap(cb, BUFFER_SIZE) == -1)
     {

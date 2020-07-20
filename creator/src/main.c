@@ -40,13 +40,10 @@ void initialize_sharedmemory_variables(char *buffer_name, int capacity)
     }
 
     // Inicializar la memoria compartida 
-      int val = cb_init(cb, capacity, 67); 
-      if (val == 0) {
-         printf("\nBuffer circular inicializado correctamente en memoria compartida\n");
-      } else {
-         printf("\nError al inicializar buffer\n");
-      }
-/*//--------------------------------------------------------------------------------------------------------------------------
+      cb_init(cb); 
+      printf("\nBuffer circular inicializado correctamente en memoria compartida\n");
+
+//--------------------------------------------------------------------------------------------------------------------------
 //##########################################################################################################################
 // PRUEBAS AL BUFFER CIRCULAR EN MEMORIA COMPARTIDA. ESTO ES CÓDIGO INNECESARIO EN EL PROGRAMA CREADOR
 //##########################################################################################################################
@@ -55,31 +52,46 @@ void initialize_sharedmemory_variables(char *buffer_name, int capacity)
       char b[] = "Yeah";
       char c[] = "Cyanide and happiness";
       char d[] = "One more!";
-      char *ptr = NULL;
+      
+      message msg1;
+      message msg2;
+      message msg3;
+      message msg4; 
 
-      cb_push_back(cb, a);
-      cb_push_back(cb, b);
-      cb_push_back(cb, c);
-      cb_push_back(cb, d); // Intento agregar otro item más aunque el buffer ya está lleno (la idea es que se maneje el error)
+      message* a1 = &msg1;
+      message* b1 = &msg2;
+      message* c1 = &msg3;
+      message* d1 = &msg4;
 
-      ptr = cb_pop_front(cb);
-      printf("\nValor: %s", ptr);
-      ptr = cb_pop_front(cb);
-      printf("\nValor: %s", ptr);
-      ptr = cb_pop_front(cb);
-      printf("\nValor: %s", ptr);      
-      ptr = cb_pop_front(cb);
-      printf("\nValor: %s", ptr); // Intento sacar otro item más aunque el buffer ya está vacío (la idea es que se maneje el error)
+      (*a1).pid = 0;
+      (*a1).end_message = 0;
+      (*a1).key = 0;
+      (*b1).pid = 0;
+      (*b1).end_message = 0;
+      (*b1).key = 0;
+      (*c1).pid = 0;
+      (*c1).end_message = 0;
+      (*c1).key = 0;
+      (*d1).pid = 0;
+      (*d1).end_message = 0;
+      (*d1).key = 0;
+      memcpy ((*a1).date_and_time, a, sizeof(a)); // Copiar string 
+      memcpy ((*b1).date_and_time, b, sizeof(b)); // Copiar string
+      memcpy ((*c1).date_and_time, c, sizeof(c)); // Copiar string
+      memcpy ((*d1).date_and_time, d, sizeof(d)); // Copiar string
 
-      printf("\ncount: %zu", cb->count);
+      cb_enqueue(cb, a1);
+      cb_enqueue(cb, b1);
+      cb_enqueue(cb, c1);
+      cb_enqueue(cb, d1); // Intento agregar otro item más aunque el buffer ya está lleno (la idea es que se maneje el error)
 
-//      cb_free(cb);  
+      printf("\n#Mensajes en el buffer: %zu\n", cb->count);
+ 
 //--------------------------------------------------------------------------------------------------------------------------
 //##########################################################################################################################
 // FIN DE LAS PRUEBAS
 //##########################################################################################################################
 //--------------------------------------------------------------------------------------------------------------------------  
-*/
     // Liberar la memoria mapeada (liberar el buffer)
     if (munmap(cb, BUFFER_SIZE) == -1)
     {
@@ -87,9 +99,6 @@ void initialize_sharedmemory_variables(char *buffer_name, int capacity)
         perror("\nError un-mmapping the file\n");
         exit(EXIT_FAILURE);
     }
-/*
-    // Destruír memoria compartida 
-    shm_unlink(buffer_name);*/
 
     // Cerrar File.
     close(shm_fd);
