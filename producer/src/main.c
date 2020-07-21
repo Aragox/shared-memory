@@ -10,8 +10,8 @@
 
 #include "circular_buffer.h"
 
-
-void execute_finisher(char *buffer_name, int capacity)
+char str_to_print[] = "Hello world";
+void execute_producer(char *buffer_name, int capacity, message *messageP)
 // Función que ejecuta el finisher para finalizar los productores, enviar mensajes de finalización a consumidores y liberar el buffer
 {
     //File descriptor de la memoria compartida
@@ -30,16 +30,27 @@ void execute_finisher(char *buffer_name, int capacity)
     ftruncate(shm_fd, BUFFER_SIZE);
 
     // Mapear memoria del objeto compartido en memoria
-    circular_buffer *cb = (circular_buffer*)mmap(0, BUFFER_SIZE, PROT_WRITE | PROT_READ, MAP_SHARED, shm_fd, 0);  //Obtengo puntero al buffer en memoria compartida 
+    circular_buffer *cb = (circular_buffer*)mmap(0, BUFFER_SIZE, PROT_WRITE | PROT_READ, MAP_SHARED, shm_fd, 0);  //Obtengo puntero al 	   buffer en memoria compartida  
+    
+
     if (cb == MAP_FAILED)
     {
         close(shm_fd);
         perror("\nError mmapping the file\n");
         exit(EXIT_FAILURE);
     }
-
-    char f = get_value(cb);
-    printf("\nValor: %c", f);
+      
+    
+    
+      
+     // memcpy ((*a1).date_and_time, a, sizeof(a)); // Copiar string 
+      //char a[] = "Hello world";
+      memcpy ((*messageP).date_and_time, str_to_print, sizeof(str_to_print));
+      cb_enqueue(cb, messageP);
+   
+      // Incrementar la cantidad de productores  
+      increase_activeproducers(cb);
+      printf("\n#Mensajes en el buffer: %zu\n", cb->count);
 /*
 //--------------------------------------------------------------------------------------------------------------------------
 //##########################################################################################################################
@@ -76,15 +87,15 @@ void execute_finisher(char *buffer_name, int capacity)
 //--------------------------------------------------------------------------------------------------------------------------  
 */
     // Liberar la memoria mapeada (liberar el buffer)
-    if (munmap(cb, BUFFER_SIZE) == -1)
+   if (munmap(cb, BUFFER_SIZE) == -1)
     {
         close(shm_fd);
         perror("\nError un-mmapping the file\n");
         exit(EXIT_FAILURE);
     }
-
+		
     /* Destruír memoria compartida */
-    shm_unlink(buffer_name);
+   // shm_unlink(buffer_name);
 
     // Cerrar File.
     close(shm_fd);
@@ -105,7 +116,22 @@ https://www.geeksforgeeks.org/write-your-own-atoi/*/
     // return result. 
     return res; 
 } 
+message* create_new_message(int pidP, int end_messageP, int keyP){
+      
 
+      message msg1;
+
+
+      message* message_producer = &msg1;
+
+
+      (*message_producer).pid = pidP;
+      (*message_producer).end_message = end_messageP;
+      (*message_producer).key = keyP;
+      
+      return message_producer;
+
+}
 int main(int argc, char* argv[])
 {
     printf("Program Name Is: %s",argv[0]); 
@@ -166,9 +192,13 @@ int main(int argc, char* argv[])
       printf("\n<<");
       printf("Process ID: %d", getpid()); // Obtener e imprimir el id del proceso
       printf(">>\n");
-  
-      execute_finisher(argv[1], myatoi(argv[2]));      
+     
+      message* message = create_new_message(0,0,0);
+      execute_producer(argv[1], myatoi(argv[2]),message);      
     } 
 
     return 0;
 }
+
+
+
