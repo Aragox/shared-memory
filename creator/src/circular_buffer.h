@@ -53,7 +53,7 @@ void cb_init(circular_buffer *cb)
     cb->front = -1;
     cb->rear = -1;
 
-    cb->end_signal = 0; // Inicializar variables y banderas
+    cb->end_signal = 1; // Inicializar variables y banderas
     cb->active_producers = 0; 
     cb->active_consumers = 0; 
 
@@ -161,3 +161,11 @@ size_t get_count(circular_buffer *cb) {
 sem_t* get_sem_ptr(circular_buffer *cb) {
     return &cb->sem1;
 }
+
+int get_rear(circular_buffer *cb) {
+    return cb->rear; 
+} 
+
+int get_front(circular_buffer *cb) {
+    return cb->front; 
+} 

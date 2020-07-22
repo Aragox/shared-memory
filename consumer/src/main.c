@@ -12,13 +12,17 @@
 #include "circular_buffer.h"
 
 
-int get_random(int upper, int lower) {
+int get_random(int upper, int lower) 
+// Función que obtiene número aleatorio en el rango upper-lower inclusivo
+{
     int num = (rand() % ((upper) - (lower) + 1)) + (lower);
     return num; 
 }
 
-int exponential_backoff(int delay) {
-     printf("\nSleeping %d seconds", delay);
+int exponential_backoff(int delay) 
+// Función que aumenta el tiempo a esperar (delay) exponencialmente. Retorna el delay actualizado
+{
+     printf("\nSlept %d seconds", delay);
      sleep(delay); // Retraso en segundos
 
      if (delay < MAX_DELAY)
@@ -29,7 +33,7 @@ int exponential_backoff(int delay) {
 }
 
 void execute_consumer(char *buffer_name, int average_time)
-// Función que ejecuta el finisher para finalizar los productores, enviar mensajes de finalización a consumidores y libera el buffer
+// Función que ejecuta el consumidor para consumir mensajes y vaciar el buffer
 {
     //File descriptor de la memoria compartida
     int shm_fd;
@@ -92,8 +96,8 @@ void execute_consumer(char *buffer_name, int average_time)
                printf("\nShow consumed message...");
                printf("\n- Process ID: %d", (*ptr).pid);
                printf("\n- Is it the finalizer message?: %d", (*ptr).end_message);
-               printf("\n- Date and time: %s", (*ptr).date_and_time);
                printf("\n- Key: %d", (*ptr).key);
+               printf("\n- Date and time: %s", (*ptr).date_and_time);
 
                printf("\n#Messages in the buffer: %zu\n", get_count(cb));
 

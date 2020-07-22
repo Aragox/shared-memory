@@ -7,12 +7,33 @@
 #include <sys/stat.h>
 #include <fcntl.h> 
 #include <unistd.h>
+#include <time.h>
 
 #include "circular_buffer.h"
 
-char str_to_print[] = "Hello world";
-void execute_producer(char *buffer_name, int capacity, message *messageP)
-// Función que ejecuta el finisher para finalizar los productores, enviar mensajes de finalización a consumidores y liberar el buffer
+
+int get_random(int upper, int lower)
+// Función que obtiene número aleatorio en el rango upper-lower inclusivo
+{
+    int num = (rand() % ((upper) - (lower) + 1)) + (lower);
+    return num; 
+}
+
+int exponential_backoff(int delay)
+// Función que aumenta el tiempo a esperar (delay) exponencialmente. Retorna el delay actualizado
+{
+     printf("\nSlept %d seconds", delay);
+     sleep(delay); // Retraso en segundos
+
+     if (delay < MAX_DELAY)
+     {
+        delay *= 2;
+     }
+     return delay;
+}
+
+void execute_producer(char *buffer_name, int average_time)
+// Función que ejecuta el productor para enviar mensajes a consumidores y llenar el buffer
 {
     //File descriptor de la memoria compartida
     int shm_fd;
@@ -31,67 +52,107 @@ void execute_producer(char *buffer_name, int capacity, message *messageP)
 
     // Mapear memoria del objeto compartido en memoria
     circular_buffer *cb = (circular_buffer*)mmap(0, BUFFER_SIZE, PROT_WRITE | PROT_READ, MAP_SHARED, shm_fd, 0);  //Obtengo puntero al 	   buffer en memoria compartida  
-    
-
     if (cb == MAP_FAILED)
     {
         close(shm_fd);
         perror("\nError mmapping the file\n");
         exit(EXIT_FAILURE);
     }
-      
-    
-    
-      
-     // memcpy ((*a1).date_and_time, a, sizeof(a)); // Copiar string 
-      //char a[] = "Hello world";
-      memcpy ((*messageP).date_and_time, str_to_print, sizeof(str_to_print));
-      cb_enqueue(cb, messageP);
-   
-      // Incrementar la cantidad de productores  
-      increase_activeproducers(cb);
-      printf("\n#Mensajes en el buffer: %zu\n", cb->count);
-/*
+
 //--------------------------------------------------------------------------------------------------------------------------
-//##########################################################################################################################
-// PRUEBAS AL BUFFER CIRCULAR EN MEMORIA COMPARTIDA. ESTO ES CÓDIGO INNECESARIO EN EL PROGRAMA CREADOR
-//##########################################################################################################################
+// EJECUTAR CICLO DE EJECUCIÓN
 //--------------------------------------------------------------------------------------------------------------------------
-      char a[] = "Hello world";
-      char b[] = "Yeah";
-      char c[] = "Cyanide and happiness";
-      char d[] = "One more!";
-      char *ptr = NULL;
-      cb_push_back(cb, a);
-      cb_push_back(cb, b);
-      cb_push_back(cb, c);
-      cb_push_back(cb, d); // Intento agregar otro item más aunque el buffer ya está lleno (la idea es que se maneje el error)
-      ptr = cb_pop_front(cb);
-      printf("\nValor: %s", ptr);
-      ptr = cb_pop_front(cb);
-      printf("\nValor: %s", ptr);
-      ptr = cb_pop_front(cb);
-      printf("\nValor: %s", ptr);      
-      ptr = cb_pop_front(cb);
-      printf("\nValor: %s", ptr); // Intento sacar otro item más aunque el buffer ya está vacío (la idea es que se maneje el error)
-      printf("\ncount: %zu", cb->count);
-      cb_free(cb);  
+    time_t curtime; // Tiempo actual 
+    int delay = get_random(average_time*2, 1); // Setear tiempo promedio de espera;
+
+    while (1) // Aumentar el número de productores activos
+    {
+      if (sem_trywait(get_sem_ptr(cb)) == 0) // El semáforo está disponible
+      {
+         increase_activeproducers(cb); // El número de productores activos incrementa
+
+         sem_post(get_sem_ptr(cb)); // Liberar semáforo
+
+         break; // Fin del loop
+
+      } else { // semáforo NO disponible
+        exponential_backoff(delay);
+      }
+    } 
+
+    delay = get_random(average_time*2, 1); // Resetear tiempo promedio de espera;  
+
+    while (1) 
+    {
+      if (sem_trywait(get_sem_ptr(cb)) == 0) // El semáforo está disponible
+      {
+
+         if (get_endsignal(cb) != -1) // Si la bandera de finalización está inactiva
+         {
+
+            if (get_count(cb) < BUFFER_CAPACITY) { // Si Buffer no está lleno
+               time(&curtime); 
+
+               char date_and_time[DATE_AND_TIME_LENGTH];
+               memcpy(date_and_time, ctime(&curtime), sizeof(date_and_time)); // Inicializar y crear string de fecha y hora
+
+               message msg;
+               message* Pmsg = &msg;
+               (*Pmsg).pid = getpid();
+               (*Pmsg).end_message = 0;
+               (*Pmsg).key = get_random(4, 0);
+               memcpy ((*Pmsg).date_and_time, date_and_time, sizeof(date_and_time)); // Copiar string de fecha y hora
+
+               printf("\n#################################################");
+               printf("\n-------------------------------------------------");
+               printf("\nShow produced message...");
+               printf("\n- Process ID: %d", (*Pmsg).pid);
+               printf("\n- Is it the finalizer message?: %d", (*Pmsg).end_message);
+               printf("\n- Key: %d", (*Pmsg).key);
+               printf("\n- Date and time: %s", (*Pmsg).date_and_time);
+
+               printf("\nInput index where the message was left: %d", get_rear(cb));
+
+               printf("\n#Messages in the buffer: %zu\n", get_count(cb));
+               printf("\n#Active producers: %d\n", get_activeproducers(cb));
+               printf("\n#Active consumers: %d\n", get_activeconsumers(cb));
+               printf("\n-------------------------------------------------");
+               printf("\n#################################################");
+
+               cb_enqueue(cb, Pmsg); // Push de mensaje especial 
+
+               delay = get_random(average_time*2, 1); // Resetear tiempo promedio de espera 
+
+               sem_post(get_sem_ptr(cb)); // Liberar semáforo
+            } else { // El Buffer está lleno
+              sem_post(get_sem_ptr(cb)); // Liberar semáforo
+
+              delay = exponential_backoff(delay);
+            }
+         } else { // Bandera de finalización activa
+             decrease_activeproducers(cb); // Disminuir productores activos
+
+             sem_post(get_sem_ptr(cb)); // Liberar semáforo
+
+             break; // Salir del ciclo
+         }
+      } else { // semáforo NO disponible
+        delay = exponential_backoff(delay);
+      }
+    }
 //--------------------------------------------------------------------------------------------------------------------------
-//##########################################################################################################################
-// FIN DE LAS PRUEBAS
-//##########################################################################################################################
-//--------------------------------------------------------------------------------------------------------------------------  
-*/
+// FIN DEL CICLO
+//--------------------------------------------------------------------------------------------------------------------------
+    printf("\nEnd producer process\n");
+    // Desplegar ID del proceso y estadísticas de gestión (HACEEERRRR!!!!!)
+
     // Liberar la memoria mapeada (liberar el buffer)
-   if (munmap(cb, BUFFER_SIZE) == -1)
+    if (munmap(cb, BUFFER_SIZE) == -1)
     {
         close(shm_fd);
         perror("\nError un-mmapping the file\n");
         exit(EXIT_FAILURE);
     }
-		
-    /* Destruír memoria compartida */
-   // shm_unlink(buffer_name);
 
     // Cerrar File.
     close(shm_fd);
@@ -112,22 +173,7 @@ https://www.geeksforgeeks.org/write-your-own-atoi/*/
     // return result. 
     return res; 
 } 
-message* create_new_message(int pidP, int end_messageP, int keyP){
-      
 
-      message msg1;
-
-
-      message* message_producer = &msg1;
-
-
-      (*message_producer).pid = pidP;
-      (*message_producer).end_message = end_messageP;
-      (*message_producer).key = keyP;
-      
-      return message_producer;
-
-}
 int main(int argc, char* argv[])
 {
     printf("Program Name Is: %s",argv[0]); 
@@ -189,8 +235,7 @@ int main(int argc, char* argv[])
       printf("Process ID: %d", getpid()); // Obtener e imprimir el id del proceso
       printf(">>\n");
      
-      message* message = create_new_message(0,0,0);
-      execute_producer(argv[1], myatoi(argv[2]),message);      
+      execute_producer(argv[1], myatoi(argv[2]));      
     } 
 
     return 0;

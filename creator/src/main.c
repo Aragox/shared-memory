@@ -48,7 +48,7 @@ void initialize_sharedmemory_variables(char *buffer_name)
 // PRUEBAS AL BUFFER CIRCULAR EN MEMORIA COMPARTIDA. ESTO ES CÓDIGO INNECESARIO EN EL PROGRAMA CREADOR
 //##########################################################################################################################
 //--------------------------------------------------------------------------------------------------------------------------
-      char a[] = "Hello world";
+/*      char a[] = "Hello world";
       char b[] = "Yeah";
       char c[] = "Cyanide and happiness";
       char d[] = "One more!";
@@ -86,7 +86,7 @@ void initialize_sharedmemory_variables(char *buffer_name)
       cb_enqueue(cb, d1); // Intento agregar otro item más aunque el buffer ya está lleno (la idea es que se maneje el error)
 
       printf("\n#Messages in the buffer: %zu\n", cb->count);
- 
+*/ 
 //--------------------------------------------------------------------------------------------------------------------------
 //##########################################################################################################################
 // FIN DE LAS PRUEBAS

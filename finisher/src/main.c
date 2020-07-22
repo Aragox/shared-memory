@@ -12,13 +12,17 @@
 #include "circular_buffer.h"
 
 
-int get_random(int upper, int lower) {
+int get_random(int upper, int lower)
+// Función que obtiene número aleatorio en el rango upper-lower inclusivo
+{
     int num = (rand() % ((upper) - (lower) + 1)) + (lower);
     return num; 
 }
 
-int exponential_backoff(int delay) {
-     printf("\nSleeping %d seconds", delay);
+int exponential_backoff(int delay)
+// Función que aumenta el tiempo a esperar (delay) exponencialmente. Retorna el delay actualizado
+{
+     printf("\nSlept %d seconds", delay);
      sleep(delay); // Retraso en segundos
 
      if (delay < MAX_DELAY)
@@ -61,7 +65,22 @@ void execute_finisher(char *buffer_name, int average_time)
     time_t curtime; // Tiempo actual 
     int delay = get_random(average_time*2, 1); // Setear tiempo promedio de espera;
 
-    change_endsignal(cb); // Setear bandera de finalización para los productores
+    while (1) // Tratar de setear bandera de finalización para los productores
+    {
+      if (sem_trywait(get_sem_ptr(cb)) == 0) // El semáforo está disponible
+      {
+         change_endsignal(cb); // Setear bandera de finalización para los productores
+
+         sem_post(get_sem_ptr(cb)); // Liberar semáforo
+
+         break; // Fin del loop
+
+      } else { // semáforo NO disponible
+        exponential_backoff(delay);
+      }
+    } 
+
+    delay = get_random(average_time*2, 1); // Resetear tiempo promedio de espera;   
 
     while (1) 
     {
@@ -74,7 +93,7 @@ void execute_finisher(char *buffer_name, int average_time)
             if (get_count(cb) < BUFFER_CAPACITY) { // Si Buffer no está lleno
                time(&curtime); 
 
-               char date_and_time[128];
+               char date_and_time[DATE_AND_TIME_LENGTH];
                memcpy(date_and_time, ctime(&curtime), sizeof(date_and_time)); // Inicializar y crear string de fecha y hora
 
                message msg;
@@ -84,7 +103,13 @@ void execute_finisher(char *buffer_name, int average_time)
                (*special_msg).key = get_random(4, 0);
                memcpy ((*special_msg).date_and_time, date_and_time, sizeof(date_and_time)); // Copiar string de fecha y hora
 
-               printf("\nDate and Time->>> %s", (*special_msg).date_and_time);
+               printf("\nShow produced message...");
+               printf("\n- Process ID: %d", (*special_msg).pid);
+               printf("\n- Is it the finalizer message?: %d", (*special_msg).end_message);
+               printf("\n- Key: %d", (*special_msg).key);
+               printf("\n- Date and time: %s", (*special_msg).date_and_time);
+
+               printf("\n#Messages in the buffer: %zu\n", get_count(cb));
 
                cb_enqueue(cb, special_msg); // Push de mensaje especial 
 
