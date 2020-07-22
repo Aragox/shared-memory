@@ -17,6 +17,17 @@ int get_random(int upper, int lower) {
     return num; 
 }
 
+int exponential_backoff(int delay) {
+     printf("\nSleeping %d seconds", delay);
+     sleep(delay); // Retraso en segundos
+
+     if (delay < MAX_DELAY)
+     {
+        delay *= 2;
+     }
+     return delay;
+}
+
 void execute_consumer(char *buffer_name, int average_time)
 // Función que ejecuta el finisher para finalizar los productores, enviar mensajes de finalización a consumidores y libera el buffer
 {
@@ -61,12 +72,7 @@ void execute_consumer(char *buffer_name, int average_time)
          break; // Fin del loop
 
       } else { // semáforo NO disponible
-          sleep(delay); // Retraso en segundos
-
-          if (delay < MAX_DELAY)
-          {
-             delay *= 2;
-          }
+        exponential_backoff(delay);
       }
     } 
 
@@ -98,26 +104,29 @@ void execute_consumer(char *buffer_name, int average_time)
                   sem_post(get_sem_ptr(cb)); // Liberar semáforo
 
                   break; // Salir del loop
+               } else {
+                 delay = get_random(average_time*2, 1); // Resetear tiempo promedio de espera 
+
+                 sem_post(get_sem_ptr(cb)); // Liberar semáforo
                }
+            } else { // Puntero es nulo
+              sem_post(get_sem_ptr(cb)); // Liberar semáforo
+
+              delay = exponential_backoff(delay);
             }
+         } else { // No hay mensajes para consumir
+           sem_post(get_sem_ptr(cb)); // Liberar semáforo
+
+           delay = exponential_backoff(delay);
          } 
-
-         delay = get_random(average_time*2, 1); // Resetear tiempo promedio de espera
-
-         sem_post(get_sem_ptr(cb)); // Liberar semáforo
-
       } else { // semáforo NO disponible
-          sleep(delay); // Retraso en segundos
-
-          if (delay < MAX_DELAY)
-          {
-             delay *= 2;
-          }
+        delay = exponential_backoff(delay);
       }
     }
 //--------------------------------------------------------------------------------------------------------------------------
 // FIN DEL CICLO
 //--------------------------------------------------------------------------------------------------------------------------
+    printf("\nEnd consumer process\n");
     // Desplegar ID del proceso y estadísticas de gestión (HACEEERRRR!!!!!)
 
     // Liberar la memoria mapeada (liberar el buffer)

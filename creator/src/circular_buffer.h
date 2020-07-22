@@ -10,7 +10,7 @@
 
 #define BUFFER_CAPACITY (3) // máximo número de items en el buffer
 #define DATE_AND_TIME_LENGTH (128) // largo del string de la fecha y hora
-#define MAX_DELAY (32) // Máximo tiempo en segundos que un proceso llega a esperar
+#define MAX_DELAY (8) // Máximo tiempo en segundos que un proceso llega a esperar
 
 typedef struct message  // Struct del buffer junto con todas las variables, banderas y semáforos
 {

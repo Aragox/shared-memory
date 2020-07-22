@@ -17,6 +17,17 @@ int get_random(int upper, int lower) {
     return num; 
 }
 
+int exponential_backoff(int delay) {
+     printf("\nSleeping %d seconds", delay);
+     sleep(delay); // Retraso en segundos
+
+     if (delay < MAX_DELAY)
+     {
+        delay *= 2;
+     }
+     return delay;
+}
+
 void execute_finisher(char *buffer_name, int average_time)
 // Función que ejecuta el finisher para finalizar los productores, enviar mensajes de finalización a consumidores y libera el buffer
 {
@@ -60,45 +71,44 @@ void execute_finisher(char *buffer_name, int average_time)
          if (get_activeproducers(cb) > 0 || get_activeconsumers(cb) > 0) // Si hay procesos activos
          {
 
-           if (get_count(cb) < BUFFER_CAPACITY) { // Si Buffer no está lleno
-              time(&curtime); 
+            if (get_count(cb) < BUFFER_CAPACITY) { // Si Buffer no está lleno
+               time(&curtime); 
 
-              char date_and_time[24];
-              memcpy(date_and_time, ctime(&curtime), sizeof(date_and_time)); // Inicializar y crear string de fecha y hora
+               char date_and_time[128];
+               memcpy(date_and_time, ctime(&curtime), sizeof(date_and_time)); // Inicializar y crear string de fecha y hora
 
-              message msg;
-              message* special_msg = &msg;
-              (*special_msg).pid = getpid();
-              (*special_msg).end_message = 1;
-              (*special_msg).key = get_random(4, 0);
-              memcpy ((*special_msg).date_and_time, date_and_time, sizeof(date_and_time)); // Copiar string de fecha y hora
+               message msg;
+               message* special_msg = &msg;
+               (*special_msg).pid = getpid();
+               (*special_msg).end_message = 1;
+               (*special_msg).key = get_random(4, 0);
+               memcpy ((*special_msg).date_and_time, date_and_time, sizeof(date_and_time)); // Copiar string de fecha y hora
 
-              cb_enqueue(cb, special_msg); // Push de mensaje especial  
-           }
+               printf("\nDate and Time->>> %s", (*special_msg).date_and_time);
 
+               cb_enqueue(cb, special_msg); // Push de mensaje especial 
+
+               delay = get_random(average_time*2, 1); // Resetear tiempo promedio de espera 
+
+               sem_post(get_sem_ptr(cb)); // Liberar semáforo
+            } else { // El Buffer está lleno
+              sem_post(get_sem_ptr(cb)); // Liberar semáforo
+
+              delay = exponential_backoff(delay);
+            }
          } else { // Ya finalizaron todos los procesos
- 
              sem_post(get_sem_ptr(cb)); // Liberar semáforo
 
              break; // Salir del ciclo
          }
-
-         delay = get_random(average_time*2, 1); // Resetear tiempo promedio de espera
-
-         sem_post(get_sem_ptr(cb)); // Liberar semáforo
-
       } else { // semáforo NO disponible
-          sleep(delay); // Retraso en segundos
-
-          if (delay < MAX_DELAY)
-          {
-             delay *= 2;
-          }
+        delay = exponential_backoff(delay);
       }
     }
 //--------------------------------------------------------------------------------------------------------------------------
 // FIN DEL CICLO
 //--------------------------------------------------------------------------------------------------------------------------
+    printf("\nEnd finisher process");
     // Liberar la memoria mapeada (liberar el buffer)
     if (munmap(cb, BUFFER_SIZE) == -1)
     {
