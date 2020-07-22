@@ -11,7 +11,7 @@
 #include "circular_buffer.h"
 
 
-void initialize_sharedmemory_variables(char *buffer_name, int capacity)
+void initialize_sharedmemory_variables(char *buffer_name)
 // Función que crea e inicializa el buffer en memoria compartida. Todas las variables y banderas del enunciado son también parte del buffer
 {
     //File descriptor de la memoria compartida
@@ -41,7 +41,7 @@ void initialize_sharedmemory_variables(char *buffer_name, int capacity)
 
     // Inicializar la memoria compartida 
       cb_init(cb); 
-      printf("\nBuffer circular inicializado correctamente en memoria compartida\n");
+      printf("\nCircular buffer successfully initialized in shared memory\n");
 
 //--------------------------------------------------------------------------------------------------------------------------
 //##########################################################################################################################
@@ -85,7 +85,7 @@ void initialize_sharedmemory_variables(char *buffer_name, int capacity)
       cb_enqueue(cb, c1);
       cb_enqueue(cb, d1); // Intento agregar otro item más aunque el buffer ya está lleno (la idea es que se maneje el error)
 
-      printf("\n#Mensajes en el buffer: %zu\n", cb->count);
+      printf("\n#Messages in the buffer: %zu\n", cb->count);
  
 //--------------------------------------------------------------------------------------------------------------------------
 //##########################################################################################################################
@@ -136,7 +136,6 @@ int main(int argc, char* argv[])
         }
 
         int valid_arg2 = 1; // Indica si el argumento 2 es válido
-        int valid_arg3 = 1; // Indica si el argumento 3 es válido
         size_t large;
         int cont = 1;
         int count2;
@@ -153,11 +152,6 @@ int main(int argc, char* argv[])
                       valid_arg2 = 0;
                       break;
                    }
-                } else {
-                   if (!isdigit(pstring[count2])) { // Verificar que los caracteres del tercer argumento sean números
-                      valid_arg3 = 0;
-                      break;
-                   }
                 }
                 count2 = count2 + 1; 
             }       
@@ -172,16 +166,12 @@ int main(int argc, char* argv[])
            printf("\nargv[1] is invalid (only letters are allowed). Closing program..."); 
            return 0;
         }
-        if (!valid_arg3) {
-           printf("\nargv[2] is invalid (only numbers are allowed). Closing program..."); 
-           return 0;
-        }
 
       printf("\n<<");
       printf("Process ID: %d", getpid()); // Obtener e imprimir el id del proceso
       printf(">>\n");
   
-      initialize_sharedmemory_variables(argv[1], myatoi(argv[2]));      
+      initialize_sharedmemory_variables(argv[1]);      
     } 
 
     return 0;

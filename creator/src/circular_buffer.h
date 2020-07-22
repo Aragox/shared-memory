@@ -10,6 +10,7 @@
 
 #define BUFFER_CAPACITY (3) // máximo número de items en el buffer
 #define DATE_AND_TIME_LENGTH (128) // largo del string de la fecha y hora
+#define MAX_DELAY (32) // Máximo tiempo en segundos que un proceso llega a esperar
 
 typedef struct message  // Struct del buffer junto con todas las variables, banderas y semáforos
 {
@@ -58,7 +59,6 @@ void cb_init(circular_buffer *cb)
 
     sem_init(&cb->sem1, 1, 1); // Inicializar semáforo
 
-//    memcpy (cb->buffer[0].date_and_time, "hola, eres vos", sizeof("hola, eres vos")); 
 }
 
 void cb_enqueue(circular_buffer *cb, message *item)
@@ -99,7 +99,7 @@ message* cb_dequeue(circular_buffer *cb)
         return NULL; 
     } 
     message* temp = &cb->buffer[cb->front]; 
-//    memset(cb->buffer[cb->front].date_and_time, '\0', sizeof(DATE_AND_TIME_LENGTH)); 
+
     if (cb->front == cb->rear) 
     { 
         cb->front = -1; 
@@ -158,9 +158,6 @@ size_t get_count(circular_buffer *cb) {
     return cb->count;
 }
 
-
-/*
-char* get_value(circular_buffer *cb) {
-    char* temp = cb->buffer[0].date_and_time;
-    return temp;
-}*/
+sem_t* get_sem_ptr(circular_buffer *cb) {
+    return &cb->sem1;
+}

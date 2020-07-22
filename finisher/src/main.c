@@ -7,12 +7,18 @@
 #include <sys/stat.h>
 #include <fcntl.h> 
 #include <unistd.h>
+#include <time.h>
 
 #include "circular_buffer.h"
 
 
-void execute_finisher(char *buffer_name, int capacity)
-// Función que ejecuta el finisher para finalizar los productores, enviar mensajes de finalización a consumidores y liberar el buffer
+int get_random(int upper, int lower) {
+    int num = (rand() % ((upper) - (lower) + 1)) + (lower);
+    return num; 
+}
+
+void execute_finisher(char *buffer_name, int average_time)
+// Función que ejecuta el finisher para finalizar los productores, enviar mensajes de finalización a consumidores y libera el buffer
 {
     //File descriptor de la memoria compartida
     int shm_fd;
@@ -39,37 +45,55 @@ void execute_finisher(char *buffer_name, int capacity)
     }
 
 //--------------------------------------------------------------------------------------------------------------------------
-//##########################################################################################################################
-// PRUEBAS AL BUFFER CIRCULAR EN MEMORIA COMPARTIDA. ESTO ES CÓDIGO INNECESARIO EN EL PROGRAMA CREADOR
-//##########################################################################################################################
+// EJECUTAR CICLO DE EJECUCIÓN
 //--------------------------------------------------------------------------------------------------------------------------
-      message* ptr = NULL;
+    time_t curtime; // Tiempo actual 
+    int delay = get_random(average_time*2, 1); // Setear tiempo promedio de espera;
 
-      ptr = cb_dequeue(cb);
-      if (ptr != NULL) {
-      printf("\nPop: %s", (*ptr).date_and_time);
-      }
-      ptr = cb_dequeue(cb);
-      if (ptr != NULL) {
-      printf("\nPop: %s", (*ptr).date_and_time);
-      }
-      ptr = cb_dequeue(cb);
-      if (ptr != NULL) {
-      printf("\nPop: %s", (*ptr).date_and_time); 
-      } 
-      ptr = cb_dequeue(cb);
-      if (ptr != NULL) {
-      printf("\nPop: %s", (*ptr).date_and_time); // Intento sacar otro item más aunque el buffer ya está vacío (la idea es que se maneje el error)*/
-      }       
+    change_endsignal(cb); // Setear bandera de finalización para los productores
 
-      printf("\n#Mensajes en el buffer: %zu\n", cb->count);
- 
+    while (1) 
+    {
+      if (sem_wait(get_sem_ptr(cb)) == 0) // El semáforo está disponible
+      {
+
+         if (get_activeproducers(cb) > 0 || get_activeconsumers(cb) > 0) // Si hay procesos activos
+         {
+
+           if (get_count(cb) < BUFFER_CAPACITY) {
+              time(&curtime); 
+
+              char date_and_time[24];
+              memcpy(date_and_time, ctime(&curtime), sizeof(date_and_time)); // Inicializar y crear string de fecha y hora
+
+              message msg;
+              message* special_msg = &msg;
+              (*special_msg).pid = getpid();
+              (*special_msg).end_message = 1;
+              (*special_msg).key = get_random(4, 0);
+              memcpy ((*special_msg).date_and_time, date_and_time, sizeof(date_and_time)); // Copiar string de fecha y hora
+
+              cb_enqueue(cb, special_msg); // Push de mensaje especial  
+         
+              delay = get_random(average_time*2, 1); // Resetear tiempo promedio de espera
+           }
+
+         } else { // Ya finalizaron todos los procesos 
+             break;
+         }
+
+      } else { // semáforo NO disponible
+          sleep(delay); // Retraso en segundos
+
+          if (delay < MAX_DELAY)
+          {
+             delay *= 2;
+          }
+      }
+    }
 //--------------------------------------------------------------------------------------------------------------------------
-//##########################################################################################################################
-// FIN DE LAS PRUEBAS
-//##########################################################################################################################
-//-------------------------------------------------------------------------------------------------------------------------- 
-
+// FIN DEL CICLO
+//--------------------------------------------------------------------------------------------------------------------------
     // Liberar la memoria mapeada (liberar el buffer)
     if (munmap(cb, BUFFER_SIZE) == -1)
     {
@@ -83,6 +107,8 @@ void execute_finisher(char *buffer_name, int capacity)
 
     // Cerrar File.
     close(shm_fd);
+
+    printf("\nShared Buffer Memory Released!\n");
 }   
  
 int myatoi(char* str) 

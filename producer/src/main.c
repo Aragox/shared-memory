@@ -62,12 +62,10 @@ void execute_producer(char *buffer_name, int capacity, message *messageP)
       char c[] = "Cyanide and happiness";
       char d[] = "One more!";
       char *ptr = NULL;
-
       cb_push_back(cb, a);
       cb_push_back(cb, b);
       cb_push_back(cb, c);
       cb_push_back(cb, d); // Intento agregar otro item más aunque el buffer ya está lleno (la idea es que se maneje el error)
-
       ptr = cb_pop_front(cb);
       printf("\nValor: %s", ptr);
       ptr = cb_pop_front(cb);
@@ -76,9 +74,7 @@ void execute_producer(char *buffer_name, int capacity, message *messageP)
       printf("\nValor: %s", ptr);      
       ptr = cb_pop_front(cb);
       printf("\nValor: %s", ptr); // Intento sacar otro item más aunque el buffer ya está vacío (la idea es que se maneje el error)
-
       printf("\ncount: %zu", cb->count);
-
       cb_free(cb);  
 //--------------------------------------------------------------------------------------------------------------------------
 //##########################################################################################################################
@@ -199,6 +195,3 @@ int main(int argc, char* argv[])
 
     return 0;
 }
-
-
-
