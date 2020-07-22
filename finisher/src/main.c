@@ -54,13 +54,13 @@ void execute_finisher(char *buffer_name, int average_time)
 
     while (1) 
     {
-      if (sem_wait(get_sem_ptr(cb)) == 0) // El semáforo está disponible
+      if (sem_trywait(get_sem_ptr(cb)) == 0) // El semáforo está disponible
       {
 
          if (get_activeproducers(cb) > 0 || get_activeconsumers(cb) > 0) // Si hay procesos activos
          {
 
-           if (get_count(cb) < BUFFER_CAPACITY) {
+           if (get_count(cb) < BUFFER_CAPACITY) { // Si Buffer no está lleno
               time(&curtime); 
 
               char date_and_time[24];
@@ -74,13 +74,18 @@ void execute_finisher(char *buffer_name, int average_time)
               memcpy ((*special_msg).date_and_time, date_and_time, sizeof(date_and_time)); // Copiar string de fecha y hora
 
               cb_enqueue(cb, special_msg); // Push de mensaje especial  
-         
-              delay = get_random(average_time*2, 1); // Resetear tiempo promedio de espera
            }
 
-         } else { // Ya finalizaron todos los procesos 
-             break;
+         } else { // Ya finalizaron todos los procesos
+ 
+             sem_post(get_sem_ptr(cb)); // Liberar semáforo
+
+             break; // Salir del ciclo
          }
+
+         delay = get_random(average_time*2, 1); // Resetear tiempo promedio de espera
+
+         sem_post(get_sem_ptr(cb)); // Liberar semáforo
 
       } else { // semáforo NO disponible
           sleep(delay); // Retraso en segundos

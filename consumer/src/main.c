@@ -7,11 +7,17 @@
 #include <sys/stat.h>
 #include <fcntl.h> 
 #include <unistd.h>
+#include <time.h>
 
 #include "circular_buffer.h"
 
 
-void execute_consumer(char *buffer_name, int capacity)
+int get_random(int upper, int lower) {
+    int num = (rand() % ((upper) - (lower) + 1)) + (lower);
+    return num; 
+}
+
+void execute_consumer(char *buffer_name, int average_time)
 // Función que ejecuta el finisher para finalizar los productores, enviar mensajes de finalización a consumidores y libera el buffer
 {
     //File descriptor de la memoria compartida
@@ -39,36 +45,80 @@ void execute_consumer(char *buffer_name, int capacity)
     }
 
 //--------------------------------------------------------------------------------------------------------------------------
-//##########################################################################################################################
-// PRUEBAS AL BUFFER CIRCULAR EN MEMORIA COMPARTIDA. ESTO ES CÓDIGO INNECESARIO EN EL PROGRAMA CREADOR
-//##########################################################################################################################
+// EJECUTAR CICLO DE EJECUCIÓN
 //--------------------------------------------------------------------------------------------------------------------------
-      message* ptr = NULL;
+    int delay = get_random(average_time*2, 1); // Setear tiempo promedio de espera;
+    message* ptr = NULL;
 
-      ptr = cb_dequeue(cb);
-      if (ptr != NULL) {
-      printf("\nPop: %s", (*ptr).date_and_time);
-      }
-      ptr = cb_dequeue(cb);
-      if (ptr != NULL) {
-      printf("\nPop: %s", (*ptr).date_and_time);
-      }
-      ptr = cb_dequeue(cb);
-      if (ptr != NULL) {
-      printf("\nPop: %s", (*ptr).date_and_time); 
-      } 
-      ptr = cb_dequeue(cb);
-      if (ptr != NULL) {
-      printf("\nPop: %s", (*ptr).date_and_time); // Intento sacar otro item más aunque el buffer ya está vacío (la idea es que se maneje el error)*/
-      }       
+    while (1) // Aumentar el número de consumidores activos
+    {
+      if (sem_trywait(get_sem_ptr(cb)) == 0) // El semáforo está disponible
+      {
+         increase_activeconsumers(cb); // El número de consumidores activos incrementa
 
-      printf("\n#Mensajes en el buffer: %zu\n", cb->count);
- 
+         sem_post(get_sem_ptr(cb)); // Liberar semáforo
+
+         break; // Fin del loop
+
+      } else { // semáforo NO disponible
+          sleep(delay); // Retraso en segundos
+
+          if (delay < MAX_DELAY)
+          {
+             delay *= 2;
+          }
+      }
+    } 
+
+    delay = get_random(average_time*2, 1); // Resetear tiempo promedio de espera;   
+
+    while (1) 
+    {
+      if (sem_trywait(get_sem_ptr(cb)) == 0) // El semáforo está disponible
+      {
+
+         if (get_count(cb) > 0) // Si hay mensajes que consumir
+         {
+            ptr = cb_dequeue(cb); // Consumir mensaje
+
+            if (ptr != NULL) 
+            {
+               printf("\nShow consumed message...");
+               printf("\n- Process ID: %d", (*ptr).pid);
+               printf("\n- Is it the finalizer message?: %d", (*ptr).end_message);
+               printf("\n- Date and time: %s", (*ptr).date_and_time);
+               printf("\n- Key: %d", (*ptr).key);
+
+               printf("\n#Messages in the buffer: %zu\n", get_count(cb));
+
+               if ((*ptr).end_message == 1 || (*ptr).key == (getpid()%5)) // Consumidor finaliza
+               {
+                  decrease_activeconsumers(cb); // Disminuir consumidores activos
+
+                  sem_post(get_sem_ptr(cb)); // Liberar semáforo
+
+                  break; // Salir del loop
+               }
+            }
+         } 
+
+         delay = get_random(average_time*2, 1); // Resetear tiempo promedio de espera
+
+         sem_post(get_sem_ptr(cb)); // Liberar semáforo
+
+      } else { // semáforo NO disponible
+          sleep(delay); // Retraso en segundos
+
+          if (delay < MAX_DELAY)
+          {
+             delay *= 2;
+          }
+      }
+    }
 //--------------------------------------------------------------------------------------------------------------------------
-//##########################################################################################################################
-// FIN DE LAS PRUEBAS
-//##########################################################################################################################
-//-------------------------------------------------------------------------------------------------------------------------- 
+// FIN DEL CICLO
+//--------------------------------------------------------------------------------------------------------------------------
+    // Desplegar ID del proceso y estadísticas de gestión (HACEEERRRR!!!!!)
 
     // Liberar la memoria mapeada (liberar el buffer)
     if (munmap(cb, BUFFER_SIZE) == -1)
@@ -77,9 +127,6 @@ void execute_consumer(char *buffer_name, int capacity)
         perror("\nError un-mmapping the file\n");
         exit(EXIT_FAILURE);
     }
-
-    /* Destruír memoria compartida */
-    shm_unlink(buffer_name);
 
     // Cerrar File.
     close(shm_fd);

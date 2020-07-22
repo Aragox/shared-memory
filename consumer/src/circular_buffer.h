@@ -15,7 +15,7 @@
 typedef struct message  // Struct del buffer junto con todas las variables, banderas y semáforos
 {
     int pid; //Id del proceso productor o finalizador
-    int end_message; //Indica si el mensaje fue producido por el finalizador (0 ó 1)
+    int end_message; //Indica si el mensaje fue producido por el finalizador
     char date_and_time[DATE_AND_TIME_LENGTH]; //Un string que contiene el tiempo y fecha actuales 
     int key; //Llave aleatoria entre 0-4     
 } message;
@@ -30,7 +30,7 @@ typedef struct circular_buffer // Struct del buffer circular junto con todas las
     int front;       // posición
     int rear;       // posición
 
-    int end_signal; // Bandera de finalización para los productores (1 ó -1)
+    int end_signal; // Bandera de finalización para los productores (0 ó 1)
     int active_producers; //Productores activos
     int active_consumers; //Consumidores activos
 
