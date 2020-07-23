@@ -124,12 +124,10 @@ https://www.geeksforgeeks.org/write-your-own-atoi/*/
 int main(int argc, char* argv[])
 {
     printf("Program Name Is: %s",argv[0]); 
-    if(argc==1) { 
-       printf("\nNo Extra Command Line Argument Passed Other Than Program Name. Closing program..."); 
-       return 0; 
+    if (argc!=2) {
+       printf("\nWrong number of arguments (2 required). Closing program...\n"); 
+       return 0;
     }
-    if(argc>=2) 
-    { 
         printf("\nNumber Of Arguments Passed: %d",argc); 
         printf("\n----Following Are The Command Line Arguments Passed----"); 
         for(int counter=0;counter<argc;counter++) {
@@ -159,12 +157,8 @@ int main(int argc, char* argv[])
             cont = cont + 1;
         }
   
-        if (argc!=2) {
-           printf("\nWrong number of arguments (only 2 required). Closing program..."); 
-           return 0;
-        }
         if (!valid_arg2) {
-           printf("\nargv[1] is invalid (only letters are allowed). Closing program..."); 
+           printf("\nargv[1] is invalid (only letters are allowed). Closing program...\n"); 
            return 0;
         }
 
@@ -173,7 +167,6 @@ int main(int argc, char* argv[])
       printf(">>\n");
   
       initialize_sharedmemory_variables(argv[1]);      
-    } 
 
     return 0;
 }

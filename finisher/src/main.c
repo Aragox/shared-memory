@@ -22,6 +22,8 @@ int get_random(int upper, int lower)
 int exponential_backoff(int delay)
 // Función que aumenta el tiempo a esperar (delay) exponencialmente. Retorna el delay actualizado
 {
+     delay = get_random(delay*2, 1); // Obtener tiempo promedio de espera, aleatoriamente; 
+
      printf("\nSlept %d seconds", delay);
      sleep(delay); // Retraso en segundos
 
@@ -63,7 +65,7 @@ void execute_finisher(char *buffer_name, int average_time)
 // EJECUTAR CICLO DE EJECUCIÓN
 //--------------------------------------------------------------------------------------------------------------------------
     time_t curtime; // Tiempo actual 
-    int delay = get_random(average_time*2, 1); // Setear tiempo promedio de espera;
+    int delay = average_time; // Setear tiempo promedio de espera;
 
     while (1) // Tratar de setear bandera de finalización para los productores
     {
@@ -80,7 +82,7 @@ void execute_finisher(char *buffer_name, int average_time)
       }
     } 
 
-    delay = get_random(average_time*2, 1); // Resetear tiempo promedio de espera;   
+    delay = average_time; // Resetear tiempo promedio de espera;   
 
     while (1) 
     {
@@ -113,7 +115,7 @@ void execute_finisher(char *buffer_name, int average_time)
 
                cb_enqueue(cb, special_msg); // Push de mensaje especial 
 
-               delay = get_random(average_time*2, 1); // Resetear tiempo promedio de espera 
+               delay = average_time; // Resetear tiempo promedio de espera 
 
                sem_post(get_sem_ptr(cb)); // Liberar semáforo
             } else { // El Buffer está lleno
@@ -170,12 +172,10 @@ https://www.geeksforgeeks.org/write-your-own-atoi/*/
 int main(int argc, char* argv[])
 {
     printf("Program Name Is: %s",argv[0]); 
-    if(argc==1) { 
-       printf("\nNo Extra Command Line Argument Passed Other Than Program Name. Closing program..."); 
-       return 0; 
+    if (argc!=3) {
+       printf("\nWrong number of arguments (3 required). Closing program...\n"); 
+       return 0;
     }
-    if(argc>=2) 
-    { 
         printf("\nNumber Of Arguments Passed: %d",argc); 
         printf("\n----Following Are The Command Line Arguments Passed----"); 
         for(int counter=0;counter<argc;counter++) {
@@ -211,25 +211,20 @@ int main(int argc, char* argv[])
             cont = cont + 1;
         }
   
-        if (argc!=3) {
-           printf("\nWrong number of arguments (only 3 required). Closing program..."); 
-           return 0;
-        }
         if (!valid_arg2) {
-           printf("\nargv[1] is invalid (only letters are allowed). Closing program..."); 
+           printf("\nargv[1] is invalid (only letters are allowed). Closing program...\n"); 
            return 0;
         }
         if (!valid_arg3) {
-           printf("\nargv[2] is invalid (only numbers are allowed). Closing program..."); 
+           printf("\nargv[2] is invalid (only numbers are allowed). Closing program...\n"); 
            return 0;
         }
 
       printf("\n<<");
       printf("Process ID: %d", getpid()); // Obtener e imprimir el id del proceso
       printf(">>\n");
-  
-      execute_finisher(argv[1], myatoi(argv[2]));      
-    } 
+     
+     execute_finisher(argv[1], myatoi(argv[2]));       
 
     return 0;
 }
