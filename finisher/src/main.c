@@ -64,7 +64,12 @@ void execute_finisher(char *buffer_name, int average_time)
 //--------------------------------------------------------------------------------------------------------------------------
     time_t curtime; // Tiempo actual 
     int delay = average_time; // Setear tiempo promedio de espera;
-
+    int sem_time;
+    int process_time;
+    int initial_time;
+    int final_time;
+    int number_of_consumers;
+    int number_of_producers;
     while (1) // Tratar de setear bandera de finalización para los productores
     {
       if (sem_trywait(get_sem_ptr(cb)) == 0) // El semáforo está disponible
@@ -76,12 +81,16 @@ void execute_finisher(char *buffer_name, int average_time)
          break; // Fin del loop
 
       } else { // semáforo NO disponible
+        initial_time = time(&curtime);
         exponential_backoff(delay);
+        final_time = time(&curtime);
+        sem_time = sem_time + (final_time-initial_time); 
       }
     } 
-
+	
     delay = average_time; // Resetear tiempo promedio de espera;   
-
+    number_of_producers = get_activeproducers(cb);
+    number_of_consumers = get_activeconsumers(cb);
     while (1) 
     {
       if (sem_trywait(get_sem_ptr(cb)) == 0) // El semáforo está disponible
@@ -119,7 +128,11 @@ void execute_finisher(char *buffer_name, int average_time)
             } else { // El Buffer está lleno
               sem_post(get_sem_ptr(cb)); // Liberar semáforo
 
-              delay = exponential_backoff(delay);
+	      initial_time = time(&curtime);
+	      delay = exponential_backoff(delay);
+	      final_time = time(&curtime);
+	      process_time = process_time + (final_time-initial_time); 
+              
             }
          } else { // Ya finalizaron todos los procesos
              sem_post(get_sem_ptr(cb)); // Liberar semáforo
@@ -127,13 +140,22 @@ void execute_finisher(char *buffer_name, int average_time)
              break; // Salir del ciclo
          }
       } else { // semáforo NO disponible
-        delay = exponential_backoff(delay);
+         initial_time = time(&curtime);
+	 delay = exponential_backoff(delay);
+	 final_time = time(&curtime);
+	 process_time = process_time + (final_time-initial_time); 
       }
     }
 //--------------------------------------------------------------------------------------------------------------------------
 // FIN DEL CICLO
 //--------------------------------------------------------------------------------------------------------------------------
-    printf("\nEnd finisher process");
+    printf("\n End finisher process");
+    printf("\n Estadistics");
+    printf("\n Semaphore Time = %d seconds", sem_time);
+    printf("\n Process Time = %d seconds", process_time);
+    printf("\n Active Processes = %d", number_of_producers);
+    printf("\n Active Consumers = %d", number_of_consumers);
+    printf("\n Number of items in the Buffer = %ld", get_count(cb));
     // Liberar la memoria mapeada (liberar el buffer)
     if (munmap(cb, BUFFER_SIZE) == -1)
     {
@@ -149,6 +171,7 @@ void execute_finisher(char *buffer_name, int average_time)
     close(shm_fd);
 
     printf("\nShared Buffer Memory Released!\n");
+
 }   
  
 int myatoi(char* str) 
