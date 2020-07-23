@@ -15,7 +15,7 @@
 typedef struct message  // Struct del buffer junto con todas las variables, banderas y semáforos
 {
     int pid; //Id del proceso productor o finalizador
-    int end_message; //Indica si el mensaje fue producido por el finalizador (0 ó 1)
+    int end_message; //Indica si el mensaje fue producido por el finalizador para finalizar los consumidores (0 ó 1)
     char date_and_time[DATE_AND_TIME_LENGTH]; //Un string que contiene el tiempo y fecha actuales 
     int key; //Llave aleatoria entre 0-4     
 } message;

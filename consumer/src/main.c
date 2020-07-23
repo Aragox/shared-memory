@@ -22,15 +22,13 @@ int get_random(int upper, int lower)
 int exponential_backoff(int delay)
 // Función que aumenta el tiempo a esperar (delay) exponencialmente. Retorna el delay actualizado
 {
-     delay = get_random(delay*2, 1); // Obtener tiempo promedio de espera, aleatoriamente; 
-
+     if (delay < MAX_DELAY)
+     {
+        delay = get_random(delay*2, 1); // Obtener tiempo promedio de espera, aleatoriamente; 
+     }
      printf("\nSlept %d seconds", delay);
      sleep(delay); // Retraso en segundos
 
-     if (delay < MAX_DELAY)
-     {
-        delay *= 2;
-     }
      return delay;
 }
 
@@ -100,6 +98,8 @@ void execute_consumer(char *buffer_name, int average_time)
                printf("\n- Is it the finalizer message?: %d", (*ptr).end_message);
                printf("\n- Key: %d", (*ptr).key);
                printf("\n- Date and time: %s", (*ptr).date_and_time);
+
+                printf("\nInput index where the message was taken: %d", get_front(cb));
 
                printf("\n#Messages in the buffer: %zu\n", get_count(cb));
 

@@ -22,15 +22,13 @@ int get_random(int upper, int lower)
 int exponential_backoff(int delay)
 // Función que aumenta el tiempo a esperar (delay) exponencialmente. Retorna el delay actualizado
 {
-     delay = get_random(delay*2, 1); // Obtener tiempo promedio de espera, aleatoriamente; 
-
+     if (delay < MAX_DELAY)
+     {
+        delay = get_random(delay*2, 1); // Obtener tiempo promedio de espera, aleatoriamente; 
+     }
      printf("\nSlept %d seconds", delay);
      sleep(delay); // Retraso en segundos
 
-     if (delay < MAX_DELAY)
-     {
-        delay *= 2;
-     }
      return delay;
 }
 

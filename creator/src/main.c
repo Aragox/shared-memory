@@ -43,55 +43,6 @@ void initialize_sharedmemory_variables(char *buffer_name)
       cb_init(cb); 
       printf("\nCircular buffer successfully initialized in shared memory\n");
 
-//--------------------------------------------------------------------------------------------------------------------------
-//##########################################################################################################################
-// PRUEBAS AL BUFFER CIRCULAR EN MEMORIA COMPARTIDA. ESTO ES CÓDIGO INNECESARIO EN EL PROGRAMA CREADOR
-//##########################################################################################################################
-//--------------------------------------------------------------------------------------------------------------------------
-/*      char a[] = "Hello world";
-      char b[] = "Yeah";
-      char c[] = "Cyanide and happiness";
-      char d[] = "One more!";
-      
-      message msg1;
-      message msg2;
-      message msg3;
-      message msg4; 
-
-      message* a1 = &msg1;
-      message* b1 = &msg2;
-      message* c1 = &msg3;
-      message* d1 = &msg4;
-
-      (*a1).pid = 0;
-      (*a1).end_message = 0;
-      (*a1).key = 0;
-      (*b1).pid = 0;
-      (*b1).end_message = 0;
-      (*b1).key = 0;
-      (*c1).pid = 0;
-      (*c1).end_message = 0;
-      (*c1).key = 0;
-      (*d1).pid = 0;
-      (*d1).end_message = 0;
-      (*d1).key = 0;
-      memcpy ((*a1).date_and_time, a, sizeof(a)); // Copiar string 
-      memcpy ((*b1).date_and_time, b, sizeof(b)); // Copiar string
-      memcpy ((*c1).date_and_time, c, sizeof(c)); // Copiar string
-      memcpy ((*d1).date_and_time, d, sizeof(d)); // Copiar string
-
-      cb_enqueue(cb, a1);
-      cb_enqueue(cb, b1);
-      cb_enqueue(cb, c1);
-      cb_enqueue(cb, d1); // Intento agregar otro item más aunque el buffer ya está lleno (la idea es que se maneje el error)
-
-      printf("\n#Messages in the buffer: %zu\n", cb->count);
-*/ 
-//--------------------------------------------------------------------------------------------------------------------------
-//##########################################################################################################################
-// FIN DE LAS PRUEBAS
-//##########################################################################################################################
-//-------------------------------------------------------------------------------------------------------------------------- 
     printf("\nEnd creator process\n"); 
     // Liberar la memoria mapeada (liberar el buffer)
     if (munmap(cb, BUFFER_SIZE) == -1)
