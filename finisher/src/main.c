@@ -70,6 +70,7 @@ void execute_finisher(char *buffer_name, int average_time)
     int final_time;
     int number_of_consumers;
     int number_of_producers;
+    int msg_produced;
     while (1) // Tratar de setear bandera de finalización para los productores
     {
       if (sem_trywait(get_sem_ptr(cb)) == 0) // El semáforo está disponible
@@ -81,9 +82,9 @@ void execute_finisher(char *buffer_name, int average_time)
          break; // Fin del loop
 
       } else { // semáforo NO disponible
-        initial_time = time(&curtime);
-        exponential_backoff(delay);
-        final_time = time(&curtime);
+        initial_time = time(NULL);
+	 exponential_backoff(delay);
+	 final_time = time(NULL);
         sem_time = sem_time + (final_time-initial_time); 
       }
     } 
@@ -111,6 +112,7 @@ void execute_finisher(char *buffer_name, int average_time)
                (*special_msg).end_message = 1;
                (*special_msg).key = get_random(4, 0);
                memcpy ((*special_msg).date_and_time, date_and_time, sizeof(date_and_time)); // Copiar string de fecha y hora
+	       msg_produced = msg_produced + 1;
 
                printf("\nShow produced message...");
                printf("\n- Process ID: %d", (*special_msg).pid);
@@ -128,9 +130,9 @@ void execute_finisher(char *buffer_name, int average_time)
             } else { // El Buffer está lleno
               sem_post(get_sem_ptr(cb)); // Liberar semáforo
 
-	      initial_time = time(&curtime);
+	      initial_time = time(NULL);
 	      delay = exponential_backoff(delay);
-	      final_time = time(&curtime);
+	      final_time = time(NULL);
 	      process_time = process_time + (final_time-initial_time); 
               
             }
@@ -140,10 +142,11 @@ void execute_finisher(char *buffer_name, int average_time)
              break; // Salir del ciclo
          }
       } else { // semáforo NO disponible
-         initial_time = time(&curtime);
+         initial_time = time(NULL);
 	 delay = exponential_backoff(delay);
-	 final_time = time(&curtime);
-	 process_time = process_time + (final_time-initial_time); 
+	 final_time = time(NULL);
+	 process_time = process_time + (final_time-initial_time);
+	 sem_time = sem_time + (final_time-initial_time); 
       }
     }
 //--------------------------------------------------------------------------------------------------------------------------
@@ -156,6 +159,7 @@ void execute_finisher(char *buffer_name, int average_time)
     printf("\n Active Processes = %d", number_of_producers);
     printf("\n Active Consumers = %d", number_of_consumers);
     printf("\n Number of items in the Buffer = %ld", get_count(cb));
+    printf("\n Number of messages produced = %d\n", msg_produced);
     // Liberar la memoria mapeada (liberar el buffer)
     if (munmap(cb, BUFFER_SIZE) == -1)
     {
