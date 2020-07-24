@@ -70,6 +70,7 @@ void execute_consumer(char *buffer_name, int average_time)
     int final_time;
     int number_of_consumers;
     int number_of_producers;
+    int msg_consumed;
     message* ptr = NULL;
 
     while (1) // Aumentar el número de consumidores activos
@@ -114,6 +115,7 @@ void execute_consumer(char *buffer_name, int average_time)
                 printf("\nInput index where the message was taken: %d", get_front(cb));
 
                printf("\n#Messages in the buffer: %zu\n", get_count(cb));
+   	       msg_consumed = msg_consumed + 1;
 
                if ((*ptr).end_message == 1 || (*ptr).key == (getpid()%5)) // Consumidor finaliza
                {
@@ -161,7 +163,8 @@ void execute_consumer(char *buffer_name, int average_time)
     printf("\n Process Time = %d seconds", process_time);
     printf("\n Active Processes = %d", number_of_producers);
     printf("\n Active Consumers = %d", number_of_consumers);
-    printf("\n Number of items in the Buffer = %ld\n", get_count(cb));
+    printf("\n Number of items in the Buffer = %ld", get_count(cb));
+    printf("\n Number of messages consumed = %d\n", msg_consumed);
     // Desplegar ID del proceso y estadísticas de gestión (HACEEERRRR!!!!!)
 
     // Liberar la memoria mapeada (liberar el buffer)
