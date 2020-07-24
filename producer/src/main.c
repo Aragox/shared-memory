@@ -70,6 +70,7 @@ void execute_producer(char *buffer_name, int average_time)
     int final_time;
     int number_of_consumers;
     int number_of_producers;
+    int msg_produced;
 
     while (1) // Aumentar el número de productores activos
     {
@@ -113,6 +114,7 @@ void execute_producer(char *buffer_name, int average_time)
                (*Pmsg).end_message = 0;
                (*Pmsg).key = get_random(4, 0);
                memcpy ((*Pmsg).date_and_time, date_and_time, sizeof(date_and_time)); // Copiar string de fecha y hora
+	       msg_produced = msg_produced + 1;
 
                cb_enqueue(cb, Pmsg); // Push de mensaje especial 
 
@@ -166,7 +168,8 @@ void execute_producer(char *buffer_name, int average_time)
     printf("\n Process Time = %d seconds", process_time);
     printf("\n Active Processes = %d", number_of_producers);
     printf("\n Active Consumers = %d", number_of_consumers);
-    printf("\n Number of items in the Buffer = %ld\n", get_count(cb));
+    printf("\n Number of items in the Buffer = %ld", get_count(cb));
+    printf("\n Number of messages produced = %d\n", msg_produced);
     // Desplegar ID del proceso y estadísticas de gestión (HACEEERRRR!!!!!)
 
     // Liberar la memoria mapeada (liberar el buffer)
