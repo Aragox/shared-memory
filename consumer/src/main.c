@@ -62,7 +62,14 @@ void execute_consumer(char *buffer_name, int average_time)
 //--------------------------------------------------------------------------------------------------------------------------
 // EJECUTAR CICLO DE EJECUCIÓN
 //--------------------------------------------------------------------------------------------------------------------------
+    time_t curtime; // Tiempo actual 
     int delay = average_time; // Setear tiempo promedio de espera;
+    int sem_time;
+    int process_time;
+    int initial_time;
+    int final_time;
+    int number_of_consumers;
+    int number_of_producers;
     message* ptr = NULL;
 
     while (1) // Aumentar el número de consumidores activos
@@ -76,11 +83,16 @@ void execute_consumer(char *buffer_name, int average_time)
          break; // Fin del loop
 
       } else { // semáforo NO disponible
+        initial_time = time(&curtime);
         exponential_backoff(delay);
+        final_time = time(&curtime);
+        sem_time = sem_time + (final_time-initial_time); 
       }
     } 
 
-    delay = average_time; // Resetear tiempo promedio de espera;   
+    delay = average_time; // Resetear tiempo promedio de espera;
+    number_of_producers = get_activeproducers(cb);
+    number_of_consumers = get_activeconsumers(cb);   
 
     while (1) 
     {
@@ -120,21 +132,36 @@ void execute_consumer(char *buffer_name, int average_time)
 
               sem_post(get_sem_ptr(cb)); // Liberar semáforo
 
-              delay = exponential_backoff(delay);
+              initial_time = time(&curtime);
+	      delay = exponential_backoff(delay);
+	      final_time = time(&curtime);
+	      process_time = process_time + (final_time-initial_time); 
             }
          } else { // No hay mensajes para consumir
            sem_post(get_sem_ptr(cb)); // Liberar semáforo
 
-           delay = exponential_backoff(delay);
+           initial_time = time(&curtime);
+	   delay = exponential_backoff(delay);
+	   final_time = time(&curtime);
+	   process_time = process_time + (final_time-initial_time); 
          } 
       } else { // semáforo NO disponible
-        delay = exponential_backoff(delay);
+        initial_time = time(&curtime);
+	delay = exponential_backoff(delay);
+	final_time = time(&curtime);
+	process_time = process_time + (final_time-initial_time);
       }
     }
 //--------------------------------------------------------------------------------------------------------------------------
 // FIN DEL CICLO
 //--------------------------------------------------------------------------------------------------------------------------
     printf("\nEnd consumer process\n");
+    printf("\n Estadistics");
+    printf("\n Semaphore Time = %d seconds", sem_time);
+    printf("\n Process Time = %d seconds", process_time);
+    printf("\n Active Processes = %d", number_of_producers);
+    printf("\n Active Consumers = %d", number_of_consumers);
+    printf("\n Number of items in the Buffer = %ld\n", get_count(cb));
     // Desplegar ID del proceso y estadísticas de gestión (HACEEERRRR!!!!!)
 
     // Liberar la memoria mapeada (liberar el buffer)
