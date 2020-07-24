@@ -22,7 +22,7 @@ int get_random(int upper, int lower)
 int exponential_backoff(int delay)
 // Función que aumenta el tiempo a esperar (delay) exponencialmente. Retorna el delay actualizado
 {
-     if (delay < MAX_DELAY)
+     if (delay <= MAX_DELAY)
      {
         delay = get_random(delay*2, 1); // Obtener tiempo promedio de espera, aleatoriamente; 
      }
@@ -35,6 +35,14 @@ int exponential_backoff(int delay)
 void execute_finisher(char *buffer_name, int average_time)
 // Función que ejecuta el finisher para finalizar los productores, enviar mensajes de finalización a consumidores y libera el buffer
 {
+    time_t curtime; // Tiempo actual 
+    int delay = average_time; // Setear tiempo promedio de espera;
+    time_t sem_time = 0;
+    time_t process_time = 0;
+    time_t initial_time;
+    time_t final_time;
+    int msg_produced = 0;
+
     //File descriptor de la memoria compartida
     int shm_fd;
 
@@ -62,19 +70,12 @@ void execute_finisher(char *buffer_name, int average_time)
 //--------------------------------------------------------------------------------------------------------------------------
 // EJECUTAR CICLO DE EJECUCIÓN
 //--------------------------------------------------------------------------------------------------------------------------
-    time_t curtime; // Tiempo actual 
-    int delay = average_time; // Setear tiempo promedio de espera;
-    int sem_time;
-    int process_time;
-    int initial_time;
-    int final_time;
-    int number_of_consumers;
-    int number_of_producers;
-    int msg_produced;
     while (1) // Tratar de setear bandera de finalización para los productores
     {
       if (sem_trywait(get_sem_ptr(cb)) == 0) // El semáforo está disponible
       {
+//         sleep(FICTIONAL_TIME); // Tiempo en segundos que dura en empezar el proceso (FICTICIO)
+
          change_endsignal(cb); // Setear bandera de finalización para los productores
 
          sem_post(get_sem_ptr(cb)); // Liberar semáforo
@@ -83,15 +84,14 @@ void execute_finisher(char *buffer_name, int average_time)
 
       } else { // semáforo NO disponible
         initial_time = time(NULL);
-	 exponential_backoff(delay);
-	 final_time = time(NULL);
+	exponential_backoff(delay);
+	final_time = time(NULL);
         sem_time = sem_time + (final_time-initial_time); 
       }
     } 
 	
     delay = average_time; // Resetear tiempo promedio de espera;   
-    number_of_producers = get_activeproducers(cb);
-    number_of_consumers = get_activeconsumers(cb);
+
     while (1) 
     {
       if (sem_trywait(get_sem_ptr(cb)) == 0) // El semáforo está disponible
@@ -112,17 +112,28 @@ void execute_finisher(char *buffer_name, int average_time)
                (*special_msg).end_message = 1;
                (*special_msg).key = get_random(4, 0);
                memcpy ((*special_msg).date_and_time, date_and_time, sizeof(date_and_time)); // Copiar string de fecha y hora
+
+               cb_enqueue(cb, special_msg); // Push de mensaje especial 
+
 	       msg_produced = msg_produced + 1;
 
-               printf("\nShow produced message...");
+               printf("\n\nProducing message...\n");
+
+               printf("\n#################################################");
+               printf("\n-------------------------------------------------");
+               printf("\nShow produced message");
                printf("\n- Process ID: %d", (*special_msg).pid);
                printf("\n- Is it the finalizer message?: %d", (*special_msg).end_message);
                printf("\n- Key: %d", (*special_msg).key);
                printf("\n- Date and time: %s", (*special_msg).date_and_time);
 
-               printf("\n#Messages in the buffer: %zu\n", get_count(cb));
+               printf("\nInput index where the message was left: %d", get_rear(cb));
 
-               cb_enqueue(cb, special_msg); // Push de mensaje especial 
+               printf("\n#Messages in the buffer: %zu\n", get_count(cb));
+               printf("\n#Active producers: %d\n", get_activeproducers(cb));
+               printf("\n#Active consumers: %d\n", get_activeconsumers(cb));
+               printf("\n-------------------------------------------------");
+               printf("\n#################################################");
 
                delay = average_time; // Resetear tiempo promedio de espera 
 
@@ -133,8 +144,7 @@ void execute_finisher(char *buffer_name, int average_time)
 	      initial_time = time(NULL);
 	      delay = exponential_backoff(delay);
 	      final_time = time(NULL);
-	      process_time = process_time + (final_time-initial_time); 
-              
+	      process_time = process_time + (final_time-initial_time);              
             }
          } else { // Ya finalizaron todos los procesos
              sem_post(get_sem_ptr(cb)); // Liberar semáforo
@@ -152,14 +162,18 @@ void execute_finisher(char *buffer_name, int average_time)
 //--------------------------------------------------------------------------------------------------------------------------
 // FIN DEL CICLO
 //--------------------------------------------------------------------------------------------------------------------------
-    printf("\n End finisher process");
-    printf("\n Estadistics");
-    printf("\n Semaphore Time = %d seconds", sem_time);
-    printf("\n Process Time = %d seconds", process_time);
-    printf("\n Active Processes = %d", number_of_producers);
-    printf("\n Active Consumers = %d", number_of_consumers);
-    printf("\n Number of items in the Buffer = %ld", get_count(cb));
-    printf("\n Number of messages produced = %d\n", msg_produced);
+    printf("\n End finisher process\n");
+
+    printf("\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
+    printf("\n************************************************************");
+    printf("\nSTATISTICS...");
+    printf("\n Process ID: %d", getpid()); // Obtener e imprimir el id del proceso
+    printf("\n Number of messages produced = %d", msg_produced);
+    printf("\n Total waiting time = %ld seconds", process_time);
+    printf("\n Waited time at Semaphores = %ld seconds", sem_time);
+    printf("\n************************************************************");
+    printf("\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
+
     // Liberar la memoria mapeada (liberar el buffer)
     if (munmap(cb, BUFFER_SIZE) == -1)
     {
